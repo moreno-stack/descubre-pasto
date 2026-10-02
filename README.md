@@ -20,13 +20,13 @@ npm run build
 
 `POST /api/recommend` interpreta intereses, tiempo y presupuesto, consulta el catálogo de `lib/places.ts` y crea una ruta que cabe en el tiempo indicado. La selección se limita a lugares del catálogo y explica el motivo de cada parada. El motor funciona sin una clave externa; opcionalmente, `OPENAI_API_KEY`, `OPENAI_BASE_URL` y `OPENAI_MODEL` habilitan la extracción de criterios con una respuesta JSON estructurada. La clave solo se lee en el servidor.
 
-## Datos de demostración
+## Catálogo inicial
 
-El catálogo y sus horarios, precios, tiempos, coordenadas e imágenes requieren revisión editorial antes de usarse para orientar visitantes. El estado `verified` indica si un registro fue verificado; los ejemplos actuales se marcan como no verificados y la interfaz avisa sobre esta limitación. No usar estas estimaciones como información operativa confirmada.
+El inventario inicial contiene 116 registros: templos, plazas, parques, centros comerciales, puentes, museos, cultura, naturaleza y platos típicos. Sus horarios, precios, descripciones, imágenes y datos de ubicación requieren revisión editorial. Los lugares sin coordenadas o duración no se ofrecen en rutas automáticas. El estado `verified` permite identificar los registros pendientes; no usar estos datos como información operativa confirmada.
 
 ## Alcance de esta entrega
 
-Incluye inicio, exploración y filtros, detalle de lugares, favoritos locales, preferencias de intereses y creación de recorridos. Registro/autenticación, persistencia de cuenta, base de datos, administración editorial, proveedor de mapas y publicación en tiendas móviles quedan para módulos posteriores. La geolocalización del navegador es opcional y se solicita únicamente al seleccionarla como punto de inicio.
+Incluye inicio, exploración y filtros con conteos, detalle de lugares, favoritos locales, preferencias de intereses y creación de recorridos. Registro/autenticación, persistencia de cuenta, base de datos, administración editorial, verificación del inventario, proveedor de mapas y publicación en tiendas móviles quedan para módulos posteriores. La geolocalización del navegador es opcional y se solicita únicamente al seleccionarla como punto de inicio.
 
 ## Despliegue en Vercel
 

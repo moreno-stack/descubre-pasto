@@ -6,7 +6,7 @@ import {
   Leaf, MapPin, MessageCircle, Mountain, Navigation, Search, Send, Sparkles,
   Utensils, X,
 } from "lucide-react";
-import { interests, places, type Interest, type Place } from "@/lib/places";
+import { interests, placeCategories, places, type Interest, type Place, type PlaceCategory } from "@/lib/places";
 
 type View = "Inicio" | "Explorar" | "Recorrido" | "Favoritos" | "Perfil";
 type RouteStop = { id: string; name: string; category: Interest; minutes: number; distanceKm: number; reason: string; schedule: string; verified: boolean; order: number };
@@ -23,7 +23,9 @@ const promptIdeas = ["Cultura e historia, 3 horas", "Comida típica y poco presu
 
 export default function Home() {
   const [view, setView] = useState<View>("Inicio");
-  const [category, setCategory] = useState<Interest | "Todas">("Todas");
+  const [category, setCategory] = useState<PlaceCategory | Interest | "Todas">("Todas");
+  const [categoryMode, setCategoryMode] = useState<"all" | "category" | "interest">("all");
+  const [visibleCount, setVisibleCount] = useState(18);
   const [search, setSearch] = useState("");
   const [favorites, setFavorites] = useState<string[]>([]);
   const [selectedPlace, setSelectedPlace] = useState<Place | null>(null);
@@ -39,11 +41,12 @@ export default function Home() {
   const [error, setError] = useState("");
 
   const filteredPlaces = useMemo(() => places.filter((place) => {
-    const matchesCategory = category === "Todas" || place.category === category;
+    const matchesCategory = categoryMode === "all" || (categoryMode === "category" ? place.category === category : place.interest === category);
     const matchesSearch = `${place.name} ${place.neighborhood} ${place.description}`.toLocaleLowerCase("es").includes(search.toLocaleLowerCase("es"));
     const matchesView = view !== "Favoritos" || favorites.includes(place.id);
     return matchesCategory && matchesSearch && matchesView;
-  }), [category, favorites, search, view]);
+  }), [category, categoryMode, favorites, search, view]);
+  const visiblePlaces = filteredPlaces.slice(0, visibleCount);
 
   function toggleFavorite(id: string) {
     setFavorites((current) => current.includes(id) ? current.filter((item) => item !== id) : [...current, id]);
@@ -70,8 +73,10 @@ export default function Home() {
     }
   }
 
-  function goToExplore(nextCategory: Interest | "Todas" = "Todas") {
+  function goToExplore(nextCategory: PlaceCategory | Interest | "Todas" = "Todas", mode: "all" | "category" | "interest" = nextCategory === "Todas" ? "all" : "interest") {
     setCategory(nextCategory);
+    setCategoryMode(mode);
+    setVisibleCount(18);
     setSearch("");
     setView("Explorar");
   }
@@ -138,9 +143,10 @@ export default function Home() {
         </>}
 
         {view === "Explorar" && <>
-          <div className="subpage-title"><div><p className="eyebrow">LUGARES Y EXPERIENCIAS</p><h1>Explora Pasto</h1><p>Encuentra un lugar por nombre, zona o interés.</p></div><label className="search-box"><Search size={17} /><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Buscar lugares" /></label></div>
-          <div className="filter-row"><button className={`filter-chip ${category === "Todas" ? "active" : ""}`} onClick={() => setCategory("Todas")}>Todos</button>{interests.map((item) => <button key={item} className={`filter-chip ${category === item ? "active" : ""}`} onClick={() => setCategory(item)}>{item}</button>)}</div>
-          <PlaceGrid items={filteredPlaces} favorites={favorites} onFavorite={toggleFavorite} onSelect={setSelectedPlace} />
+          <div className="subpage-title"><div><p className="eyebrow">LUGARES Y EXPERIENCIAS</p><h1>Explora Pasto</h1><p>{filteredPlaces.length} registros · encuentra por nombre, zona o categoría.</p></div><label className="search-box"><Search size={17} /><input value={search} onChange={(event) => { setSearch(event.target.value); setVisibleCount(18); }} placeholder="Buscar lugares" /></label></div>
+          <div className="filter-row"><button className={`filter-chip ${categoryMode === "all" ? "active" : ""}`} onClick={() => { setCategory("Todas"); setCategoryMode("all"); setVisibleCount(18); }}>Todos ({places.length})</button>{placeCategories.map((item) => <button key={item} className={`filter-chip ${categoryMode === "category" && category === item ? "active" : ""}`} onClick={() => { setCategory(item); setCategoryMode("category"); setVisibleCount(18); }}>{item} ({places.filter((place) => place.category === item).length})</button>)}</div>
+          <PlaceGrid items={visiblePlaces} favorites={favorites} onFavorite={toggleFavorite} onSelect={setSelectedPlace} />
+          {filteredPlaces.length > visiblePlaces.length && <button className="text-button" style={{ margin: "22px auto", display: "flex" }} onClick={() => setVisibleCount((count) => count + 18)}>Mostrar más ({filteredPlaces.length - visiblePlaces.length} restantes) <ArrowRight size={15} /></button>}
           {!filteredPlaces.length && <div className="favorite-empty"><p>No encontramos lugares con esos filtros. Prueba otra categoría o búsqueda.</p></div>}
         </>}
 
@@ -196,7 +202,7 @@ export default function Home() {
 
         {view === "Favoritos" && <>
           <div className="subpage-title"><div><p className="eyebrow">TU LISTA PERSONAL</p><h1>Lugares guardados</h1><p>Ideas para tu próxima salida por Pasto.</p></div></div>
-          {filteredPlaces.length ? <PlaceGrid items={filteredPlaces} favorites={favorites} onFavorite={toggleFavorite} onSelect={setSelectedPlace} /> : <div className="favorite-empty"><div><Heart size={27} /><p>Aún no guardas lugares. Toca el corazón de una ficha para tenerla a mano.</p><button className="text-button" onClick={() => goToExplore()}>Explorar lugares <ArrowRight size={15} /></button></div></div>}
+          {filteredPlaces.length ? <><PlaceGrid items={visiblePlaces} favorites={favorites} onFavorite={toggleFavorite} onSelect={setSelectedPlace} />{filteredPlaces.length > visiblePlaces.length && <button className="text-button" style={{ margin: "22px auto", display: "flex" }} onClick={() => setVisibleCount((count) => count + 18)}>Mostrar más <ArrowRight size={15} /></button>}</> : <div className="favorite-empty"><div><Heart size={27} /><p>Aún no guardas lugares. Toca el corazón de una ficha para tenerla a mano.</p><button className="text-button" onClick={() => goToExplore()}>Explorar lugares <ArrowRight size={15} /></button></div></div>}
         </>}
 
         {view === "Perfil" && <>
@@ -207,11 +213,11 @@ export default function Home() {
 
       <nav className="mobile-nav" aria-label="Navegación móvil">{navItems.map(({ label, icon: Icon }) => <button key={label} className={view === label ? "active" : ""} onClick={() => setView(label)} aria-label={label}><Icon size={19} /><span>{label}</span></button>)}</nav>
 
-      {selectedPlace && <div className="detail-backdrop" role="presentation" onClick={() => setSelectedPlace(null)}><section className="detail-dialog" role="dialog" aria-modal="true" aria-labelledby="detail-title" onClick={(event) => event.stopPropagation()}><div className="detail-photo" style={{ backgroundImage: `url('${selectedPlace.image}')` }} /><button className="icon-button detail-close" onClick={() => setSelectedPlace(null)} aria-label="Cerrar detalle"><X size={18} /></button><div className="detail-content"><p className="eyebrow">{selectedPlace.category} · {selectedPlace.neighborhood}</p><h2 id="detail-title">{selectedPlace.name}</h2><p>{selectedPlace.description}</p><p>{selectedPlace.story}</p><div className="place-meta"><span><Clock3 size={13} /> Visita sugerida: {selectedPlace.visitMinutes} min</span><span><MapPin size={13} /> {selectedPlace.neighborhood}</span></div><p className="notice">{selectedPlace.schedule}. Información demostrativa pendiente de verificación editorial.</p><button className="primary-button" style={{ marginTop: 12 }} onClick={() => toggleFavorite(selectedPlace.id)}>{favorites.includes(selectedPlace.id) ? <Check size={15} /> : <Heart size={15} />}{favorites.includes(selectedPlace.id) ? "Guardado" : "Guardar lugar"}</button></div></section></div>}
+      {selectedPlace && <div className="detail-backdrop" role="presentation" onClick={() => setSelectedPlace(null)}><section className="detail-dialog" role="dialog" aria-modal="true" aria-labelledby="detail-title" onClick={(event) => event.stopPropagation()}><div className="detail-photo" style={{ backgroundImage: `url('${selectedPlace.image}')` }} /><button className="icon-button detail-close" onClick={() => setSelectedPlace(null)} aria-label="Cerrar detalle"><X size={18} /></button><div className="detail-content"><p className="eyebrow">{selectedPlace.category} · {selectedPlace.neighborhood}</p><h2 id="detail-title">{selectedPlace.name}</h2><p>{selectedPlace.description}</p><p>{selectedPlace.story}</p><div className="place-meta">{selectedPlace.visitMinutes && <span><Clock3 size={13} /> Visita sugerida: {selectedPlace.visitMinutes} min</span>}<span><MapPin size={13} /> {selectedPlace.latitude === undefined ? "Ubicación por verificar" : selectedPlace.neighborhood}</span></div><p className="notice">{selectedPlace.verified ? selectedPlace.schedule : "Registro pendiente de verificación: confirmar dirección, coordenadas, horarios, fuente y condiciones de acceso antes de visitarlo."}</p><button className="primary-button" style={{ marginTop: 12 }} onClick={() => toggleFavorite(selectedPlace.id)}>{favorites.includes(selectedPlace.id) ? <Check size={15} /> : <Heart size={15} />}{favorites.includes(selectedPlace.id) ? "Guardado" : "Guardar lugar"}</button></div></section></div>}
     </main>
   );
 }
 
 function PlaceGrid({ items, favorites, onFavorite, onSelect }: { items: Place[]; favorites: string[]; onFavorite: (id: string) => void; onSelect: (place: Place) => void }) {
-  return <div className="place-grid">{items.map((place) => <article className="place-card" key={place.id}><button className="place-image" style={{ backgroundImage: `url('${place.image}')` }} onClick={() => onSelect(place)} aria-label={`Ver ${place.name}`}><span className="place-tag">{place.category}</span></button><button className={`favorite-button ${favorites.includes(place.id) ? "saved" : ""}`} onClick={() => onFavorite(place.id)} aria-label={favorites.includes(place.id) ? "Quitar de favoritos" : "Guardar en favoritos"}><Heart size={16} fill={favorites.includes(place.id) ? "currentColor" : "none"} /></button><div className="place-info"><div className="place-title-row"><button className="text-button" style={{ padding: 0, textAlign: "left" }} onClick={() => onSelect(place)}><h3>{place.name}</h3></button></div><p>{place.description}</p><div className="place-meta"><span><MapPin size={12} />{place.neighborhood}</span><span><Clock3 size={12} />{place.visitMinutes} min</span></div></div></article>)}</div>;
+  return <div className="place-grid">{items.map((place) => <article className="place-card" key={place.id}><button className="place-image" style={{ backgroundImage: `url('${place.image}')` }} onClick={() => onSelect(place)} aria-label={`Ver ${place.name}`}><span className="place-tag">{place.kind === "Plato típico" ? "Plato típico" : place.category}</span></button><button className={`favorite-button ${favorites.includes(place.id) ? "saved" : ""}`} onClick={() => onFavorite(place.id)} aria-label={favorites.includes(place.id) ? "Quitar de favoritos" : "Guardar en favoritos"}><Heart size={16} fill={favorites.includes(place.id) ? "currentColor" : "none"} /></button><div className="place-info"><div className="place-title-row"><button className="text-button" style={{ padding: 0, textAlign: "left" }} onClick={() => onSelect(place)}><h3>{place.name}</h3></button></div><p>{place.description}</p><div className="place-meta"><span><MapPin size={12} />{place.latitude === undefined ? "Ubicación pendiente" : place.neighborhood}</span>{place.visitMinutes && <span><Clock3 size={12} />{place.visitMinutes} min</span>}</div></div></article>)}</div>;
 }

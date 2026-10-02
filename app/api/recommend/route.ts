@@ -13,6 +13,11 @@ type RecommendationRequest = {
 };
 
 type Intent = { hours: number; budget: string; interests: Interest[] };
+type RoutablePlace = Place & { latitude: number; longitude: number; visitMinutes: number };
+
+function hasRouteData(place: Place): place is RoutablePlace {
+  return place.latitude !== undefined && place.longitude !== undefined && place.visitMinutes !== undefined;
+}
 
 function parseIntent(prompt: string, request: RecommendationRequest): Intent {
   const normalized = prompt.toLocaleLowerCase("es").normalize("NFD").replace(/[\u0300-\u036f]/g, "");
@@ -78,7 +83,8 @@ function buildRoute(intent: Intent, request: RecommendationRequest) {
   const visited = new Set(request.visited ?? []);
   const favorites = new Set(request.favorites ?? []);
   const candidates = places
-    .filter((place) => intent.interests.includes(place.category) || (intent.interests.includes("Cultura") && place.category === "Historia"))
+    .filter((place) => intent.interests.includes(place.interest))
+    .filter(hasRouteData)
     .filter((place) => intent.budget === "Alto" || place.budget !== "Alto")
     .filter((place) => !visited.has(place.id))
     .map((place) => ({ place, distance: distanceKm(startPoint, place) }))
@@ -123,7 +129,7 @@ export async function POST(request: Request) {
         category: place.category,
         minutes: place.visitMinutes,
         distanceKm: Math.round(distance * 10) / 10,
-        reason: `Incluido por tu interés en ${place.category.toLocaleLowerCase("es")} y su compatibilidad con el tiempo indicado.`,
+        reason: `Incluido por tu interés en ${place.interest.toLocaleLowerCase("es")} y su compatibilidad con el tiempo indicado.`,
         schedule: place.schedule,
         verified: place.verified,
         order: index + 1,
