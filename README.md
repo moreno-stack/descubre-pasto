@@ -26,17 +26,20 @@ El inventario inicial contiene 116 registros: templos, plazas, parques, centros 
 
 ## Alcance de esta entrega
 
-Incluye inicio, exploración y filtros con conteos, detalle de lugares, favoritos locales, preferencias de intereses, creación de recorridos y autenticación Supabase por correo/contraseña y Google OAuth. El catálogo, favoritos y preferencias todavía no se sincronizan con una base de datos de usuario. La administración editorial, verificación del inventario, proveedor de mapas y publicación en tiendas móviles quedan para módulos posteriores. La geolocalización del navegador es opcional y se solicita únicamente al seleccionarla como punto de inicio.
+Incluye inicio, exploración y filtros con conteos, detalle de lugares, favoritos locales, preferencias de intereses, creación de recorridos y cuentas locales de demostración con correo/contraseña. Las cuentas, el catálogo, favoritos y preferencias todavía no se sincronizan con un servidor. La administración editorial, verificación del inventario, proveedor de mapas y publicación en tiendas móviles quedan para módulos posteriores. La geolocalización del navegador es opcional y se solicita únicamente al seleccionarla como punto de inicio.
 
 ## Configurar inicio de sesión
 
-1. Crea un proyecto en Supabase y copia la URL del proyecto y su clave pública `anon` desde Project Settings > API.
-2. En local, copia `.env.example` a `.env.local` y completa `NEXT_PUBLIC_SUPABASE_URL` y `NEXT_PUBLIC_SUPABASE_ANON_KEY`. Estas son claves públicas del cliente; nunca pongas una `service_role` en variables `NEXT_PUBLIC_*` ni en el navegador.
-3. En Supabase > Authentication > Providers, habilita Email para crear cuentas y restablecer contraseñas. Si deseas Google, habilita el proveedor Google y configura su Client ID y Client Secret desde Google Cloud Console.
-4. En Supabase > Authentication > URL Configuration, agrega `http://localhost:3000` como Site URL y Redirect URL. Cuando despliegues, agrega también el dominio de Vercel (por ejemplo `https://tu-proyecto.vercel.app/**`). El callback de Google en Google Cloud debe ser el que muestra Supabase para el proveedor, normalmente `https://<project-ref>.supabase.co/auth/v1/callback`.
-5. En Vercel > Project > Settings > Environment Variables, define `NEXT_PUBLIC_SUPABASE_URL` y `NEXT_PUBLIC_SUPABASE_ANON_KEY` para Preview y Production, y vuelve a desplegar.
+1. Para usar la demostración local no se necesitan credenciales: desde el formulario elige «Regístrate» y luego podrás iniciar sesión en el mismo navegador.
+2. Para cuentas reales sincronizadas, crea un proyecto en Supabase y copia la URL y clave pública `anon` desde Project Settings > API.
+3. En local, copia `.env.example` a `.env.local` y completa `NEXT_PUBLIC_SUPABASE_URL` y `NEXT_PUBLIC_SUPABASE_ANON_KEY`. Son claves públicas; nunca pongas una `service_role` en variables `NEXT_PUBLIC_*` ni en el navegador.
+4. En Supabase > Authentication > Providers, habilita Email. Google OAuth no está habilitado en esta versión de la interfaz.
+5. En Supabase > Authentication > URL Configuration, agrega `http://localhost:3000` como Site URL y Redirect URL; agrega también el dominio de Vercel cuando despliegues.
+6. En Vercel > Project > Settings > Environment Variables, define las dos variables para Preview y Production, y vuelve a desplegar.
 
-El flujo implementado incluye inicio de sesión, registro con nombre y confirmación por correo, recuperación y actualización de contraseña, Google OAuth, estado de sesión y cierre de sesión. El recorrido del catálogo se puede usar sin cuenta. El alta y OAuth no se completan hasta configurar credenciales y proveedores en Supabase.
+La primera pantalla es una portada con opciones para iniciar sesión o crear cuenta; también ofrece entrar como visitante. El flujo actual incluye registro e inicio de sesión con correo/contraseña en modo local, sesión persistente en el navegador y cierre de sesión. Si se configuran las variables Supabase, el formulario usa Supabase Email en su lugar.
+
+El modo local guarda las cuentas solo en ese navegador y dispositivo. La contraseña se deriva con PBKDF2 y no se guarda en texto claro; aun así, este modo es solo para demostración, no autentica en producción, no verifica correos, no permite recuperar contraseñas por email, no sincroniza entre dispositivos y los datos se borran al limpiar el almacenamiento del navegador. Para producción, conecta Supabase.
 
 ## Mapas y fichas de lugar
 

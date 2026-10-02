@@ -6,17 +6,19 @@ import {
   MapPin, Mountain, Navigation, Search, Send, Sparkles, UserRound,
   Utensils, X,
 } from "lucide-react";
-import type { User } from "@supabase/supabase-js";
 import { interests, placeCategories, places, type Interest, type Place, type PlaceCategory } from "@/lib/places";
 import { ExploreGallery, gallerySections, homeGallerySections } from "@/components/ExploreGallery";
 import { PlaceGrid } from "@/components/PlaceGrid";
 import { AuthDialog, type AuthMode } from "@/components/AuthDialog";
 import { GooglePlaceMap } from "@/components/GooglePlaceMap";
+import { WelcomeGate } from "@/components/WelcomeGate";
 import { getSupabaseClient } from "@/lib/supabase";
+import { readDemoSession, signOutDemoAccount, type DemoSession } from "@/lib/demoAuth";
 
 type View = "Inicio" | "Explorar" | "Recorrido" | "Favoritos" | "Perfil";
 type RouteStop = { id: string; name: string; category: Interest; minutes: number; distanceKm: number; reason: string; schedule: string; verified: boolean; order: number };
 type Recommendation = { intent: { hours: number; budget: string; interests: Interest[] }; route: RouteStop[]; estimatedMinutes: number; note: string };
+type ActiveUser = { email: string; displayName: string; local: boolean };
 
 const categoryIcons = { Cultura: Landmark, Historia: BookOpen, Gastronomía: Utensils, Naturaleza: Mountain };
 const categoryDescriptions: Record<Interest, string> = {
@@ -29,7 +31,8 @@ const promptIdeas = ["Cultura e historia, 3 horas", "Comida típica y poco presu
 
 export default function Home() {
   const [view, setView] = useState<View>("Inicio");
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<ActiveUser | null>(null);
+  const [hasEnteredAsGuest, setHasEnteredAsGuest] = useState(false);
   const [authOpen, setAuthOpen] = useState(false);
   const [authMode, setAuthMode] = useState<AuthMode>("login");
   const [category, setCategory] = useState<PlaceCategory | Interest | "Todas">("Todas");
@@ -52,21 +55,44 @@ export default function Home() {
   const [error, setError] = useState("");
 
   useEffect(() => {
+    const localSession = readDemoSession();
+    if (localSession) setUser({ email: localSession.email, displayName: localSession.displayName, local: true });
+
+    const handleDemoAuth = (event: Event) => {
+      const session = (event as CustomEvent<DemoSession | null>).detail;
+      setUser(session ? { email: session.email, displayName: session.displayName, local: true } : null);
+    };
+    window.addEventListener("descubre-pasto-demo-auth", handleDemoAuth);
+
     const supabase = getSupabaseClient();
-    if (!supabase) return;
+    if (!supabase) return () => window.removeEventListener("descubre-pasto-demo-auth", handleDemoAuth);
 
     void supabase.auth.getSession().then(({ data, error: sessionError }) => {
-      if (!sessionError) setUser(data.session?.user ?? null);
+      if (!sessionError) {
+        const sessionUser = data.session?.user;
+        setUser(sessionUser ? {
+          email: sessionUser.email ?? "",
+          displayName: sessionUser.user_metadata?.display_name ?? sessionUser.email?.split("@")[0] ?? "Explorador",
+          local: false,
+        } : null);
+      }
     });
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      setUser(session?.user ?? null);
+      setUser(session?.user ? {
+        email: session.user.email ?? "",
+        displayName: session.user.user_metadata?.display_name ?? session.user.email?.split("@")[0] ?? "Explorador",
+        local: false,
+      } : null);
       if (event === "PASSWORD_RECOVERY") {
         setAuthMode("update-password");
         setAuthOpen(true);
       }
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      subscription.unsubscribe();
+      window.removeEventListener("descubre-pasto-demo-auth", handleDemoAuth);
+    };
   }, []);
 
   const filteredPlaces = useMemo(() => places.filter((place) => {
@@ -134,6 +160,11 @@ export default function Home() {
   }
 
   async function signOut() {
+    if (user?.local) {
+      signOutDemoAccount();
+      setView("Inicio");
+      return;
+    }
     const supabase = getSupabaseClient();
     if (!supabase) return;
     const { error: signOutError } = await supabase.auth.signOut();
@@ -141,13 +172,26 @@ export default function Home() {
     else setView("Inicio");
   }
 
-  const displayName = user?.user_metadata?.display_name ?? user?.email?.split("@")[0] ?? "Explorador";
+  const displayName = user?.displayName ?? "Explorador";
   const initials = displayName.split(/[\s._-]+/).filter(Boolean).slice(0, 2).map((part: string) => part[0]).join("").toLocaleUpperCase("es") || "VP";
 
   const navItems: { label: View; icon: typeof Compass }[] = [
     { label: "Inicio", icon: Compass }, { label: "Explorar", icon: Search },
     { label: "Recorrido", icon: Navigation }, { label: "Favoritos", icon: Heart }, { label: "Perfil", icon: Bookmark },
   ];
+
+  if (!user && !hasEnteredAsGuest) {
+    return (
+      <>
+        <WelcomeGate
+          onSignIn={() => openAuth("login")}
+          onRegister={() => openAuth("register")}
+          onGuest={() => setHasEnteredAsGuest(true)}
+        />
+        {authOpen && <AuthDialog initialMode={authMode} onClose={() => setAuthOpen(false)} />}
+      </>
+    );
+  }
 
   return (
     <main className="app-shell">
@@ -273,7 +317,7 @@ export default function Home() {
             <div className="profile-account-heading"><div><h2>{user ? displayName : "Explora como visitante"}</h2><p style={{ color: "var(--muted)", fontSize: 12 }}>{user?.email ?? "Inicia sesión o crea una cuenta para empezar."}</p></div>{user ? <button className="secondary-button" onClick={() => void signOut()}><LogOut size={15} /> Cerrar sesión</button> : <button className="primary-button" onClick={() => openAuth("register")}><UserRound size={15} /> Crear cuenta</button>}</div>
             <div className="profile-grid"><div className="profile-stat"><strong>{favorites.length}</strong><span>Lugares guardados en este dispositivo</span></div><div className="profile-stat"><strong>{selectedInterests.length}</strong><span>Intereses activos</span></div></div>
             <div className="field" style={{ marginTop: 20 }}><label>Mis intereses</label><div className="interest-options">{interests.map((item) => <label className="interest-option" key={item}><input type="checkbox" checked={selectedInterests.includes(item)} onChange={() => setSelectedInterests((current) => current.includes(item) ? current.filter((interest) => interest !== item) : [...current, item])} />{item}</label>)}</div></div>
-            <p className="notice">La cuenta se autentica con Supabase. Los favoritos y preferencias todavía se guardan localmente y no se sincronizan entre dispositivos.</p>
+            <p className="notice">{user?.local ? "Cuenta de demostración: existe solo en este navegador. Su contraseña se guarda como hash local, pero esto no reemplaza un servicio seguro de autenticación ni sincroniza tus datos." : "La cuenta se autentica con Supabase. Los favoritos y preferencias todavía se guardan localmente y no se sincronizan entre dispositivos."}</p>
           </section>
         </>}
       </div>
