@@ -49,7 +49,7 @@ export function AuthDialog({ initialMode = "login", onClose }: { initialMode?: A
     setMessage("");
     setError("");
     if (!supabase) {
-      setError("Para activar cuentas reales, crea un proyecto Supabase, completa NEXT_PUBLIC_SUPABASE_URL y NEXT_PUBLIC_SUPABASE_ANON_KEY en .env.local y reinicia npm run dev. La guía está en README.md.");
+      setError("Supabase aún no está conectado. Completa NEXT_PUBLIC_SUPABASE_URL y NEXT_PUBLIC_SUPABASE_ANON_KEY en .env.local y reinicia npm run dev. Consulta README.md.");
       return;
     }
 
@@ -93,7 +93,7 @@ export function AuthDialog({ initialMode = "login", onClose }: { initialMode?: A
   async function handleGoogleSignIn() {
     setError("");
     if (!supabase) {
-      setError("Para activar Google, configura primero Supabase y habilita el proveedor Google. Sigue los pasos de README.md.");
+      setError("Google requiere conectar Supabase y habilitar el proveedor Google. Consulta los pasos de README.md.");
       return;
     }
 
@@ -124,9 +124,9 @@ export function AuthDialog({ initialMode = "login", onClose }: { initialMode?: A
           {mode === "register" && <label className="auth-field"><span>Nombre</span><span className="auth-input-wrap"><UserRound size={16} /><input autoComplete="name" value={name} onChange={(event) => setName(event.target.value)} placeholder="Tu nombre" required maxLength={80} /></span></label>}
           {mode !== "update-password" && <label className="auth-field"><span>Correo electrónico</span><span className="auth-input-wrap"><AtSign size={16} /><input type="text" inputMode="email" autoCapitalize="none" autoCorrect="off" spellCheck={false} autoComplete="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="tu@correo.com" required pattern="[^\s@]+@[^\s@]+\.[^\s@]+" /></span></label>}
           {mode !== "recover" && <label className="auth-field"><span>Contraseña</span><span className="auth-input-wrap"><LockKeyhole size={16} /><input type="password" autoComplete={mode === "register" || mode === "update-password" ? "new-password" : "current-password"} value={password} onChange={(event) => setPassword(event.target.value)} placeholder={mode === "update-password" ? "Nueva contraseña" : "Mínimo 8 caracteres"} minLength={8} required /></span></label>}
-          {error && <p className="auth-feedback error" role="alert">{error}</p>}
+          {error && <p className={`auth-feedback ${configured ? "error" : "setup"}`} role="alert">{error}</p>}
           {message && <p className="auth-feedback success" role="status">{message}</p>}
-          {!configured && <p className="auth-setup-note">Falta configurar Supabase para activar las cuentas. La interfaz ya está lista; las instrucciones están en el README.</p>}
+          {!configured && !error && <p className="auth-setup-note">Conecta Supabase para crear cuentas e iniciar sesión. Completa sus dos variables en .env.local; ver README.md. También puedes seguir explorando sin cuenta.</p>}
           <button className="primary-button auth-submit" type="submit" disabled={busy}>{busy ? "Un momento..." : mode === "login" ? "Iniciar sesión" : mode === "register" ? "Crear cuenta" : mode === "recover" ? "Enviar enlace" : "Guardar contraseña"}</button>
         </form>
 
