@@ -21,6 +21,10 @@ export type Place = {
   neighborhood: string;
   description: string;
   story: string;
+  history: string;
+  founders: string;
+  activities: string[];
+  historySource?: string;
   image: string;
   imageAlt: string;
   imageIsIllustrative: boolean;
@@ -42,6 +46,22 @@ function slugify(value: string) {
   return value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
 }
 
+function suggestedActivities(category: PlaceCategory, kind: Place["kind"]) {
+  if (kind === "Plato típico") return ["Conocer y probar este plato en un establecimiento local; disponibilidad por confirmar."];
+  const suggestions: Record<PlaceCategory, string[]> = {
+    Templos: ["Observar arquitectura e historia; confirmar horarios de visita y celebraciones."],
+    Plazas: ["Recorrer el espacio público y consultar la agenda cultural vigente."],
+    Parques: ["Pasear, descansar y disfrutar del espacio al aire libre; servicios por confirmar."],
+    "Centros comerciales": ["Recorrer locales y servicios; verificar horarios y establecimientos abiertos."],
+    Puentes: ["Observar el entorno desde zonas peatonales seguras; no ingresar a áreas restringidas."],
+    Museos: ["Consultar exposiciones, recorridos y horarios antes de la visita."],
+    Cultura: ["Consultar programación cultural y disponibilidad de actividades."],
+    Naturaleza: ["Disfrutar del paisaje y consultar condiciones de acceso, clima y conservación."],
+    Gastronomía: ["Explorar productos o sabores locales; confirmar oferta y horarios."],
+  };
+  return suggestions[category];
+}
+
 function pendingEntry(name: string, category: PlaceCategory, interest: Interest, kind: Place["kind"] = "Lugar"): Place {
   return {
     id: `${slugify(category)}-${slugify(name)}`,
@@ -52,6 +72,9 @@ function pendingEntry(name: string, category: PlaceCategory, interest: Interest,
     neighborhood: "Sector por confirmar",
     description: "Registro inicial del inventario; descripción y datos operativos pendientes de verificación.",
     story: "Antes de recomendar una visita, se deben confirmar dirección, coordenadas, fuente, horario y condiciones de acceso.",
+    history: "La historia y la fecha de creación están pendientes de documentar con una fuente confiable.",
+    founders: "No hay datos de fundadores o responsables iniciales verificados en el catálogo.",
+    activities: suggestedActivities(category, kind),
     image: imageForPlace(name, category),
     imageAlt: isIllustrativeImage(name) ? `Foto de referencia para ${category}` : `Fotografía de ${name}`,
     imageIsIllustrative: isIllustrativeImage(name),
@@ -72,6 +95,10 @@ export const places: Place[] = [
     neighborhood: "Centro histórico",
     description: "Un buen punto de partida para reconocer el corazón cívico de Pasto.",
     story: "La plaza reúne edificios representativos y conecta con recorridos a pie por el centro.",
+    history: "SITUR la identifica como el corazón de Pasto y registra su ubicación en Calle 19 #25-02. La fecha de creación y sus transformaciones históricas aún deben documentarse.",
+    founders: "No hay fundadores individuales verificados para este espacio público.",
+    activities: suggestedActivities("Plazas", "Lugar"),
+    historySource: "SITUR Pasto (referencia aportada para el proyecto; confirmar enlace y datos antes de publicar).",
     image: "/imagenes/plaza-narino.jpg",
     imageAlt: "Vista diurna de la Plaza de Nariño",
     imageIsIllustrative: false,
@@ -92,6 +119,9 @@ export const places: Place[] = [
     neighborhood: "Centro histórico",
     description: "Una casa museo para acercarse a oficios, objetos y memoria regional.",
     story: "La visita permite conocer expresiones del trabajo artesanal y la vida tradicional nariñense.",
+    history: "La reseña histórica y la fecha de creación del museo deben validarse con su entidad administradora.",
+    founders: "Fundadores o responsables iniciales pendientes de confirmar con una fuente institucional.",
+    activities: suggestedActivities("Museos", "Lugar"),
     image: imageForPlace("Museo Taminango", "Museos"),
     imageAlt: "Foto de referencia de un espacio museístico de Pasto",
     imageIsIllustrative: true,
@@ -112,6 +142,9 @@ export const places: Place[] = [
     neighborhood: "Pandiaco",
     description: "Un espacio dedicado a las expresiones artísticas del Carnaval de Negros y Blancos.",
     story: "Máscaras, carrozas y saberes artesanales forman parte de una celebración reconocida por la UNESCO.",
+    history: "El museo se relaciona con la tradición del Carnaval de Negros y Blancos; su historia institucional requiere fuente y fechas verificadas.",
+    founders: "Fundadores o entidad promotora pendientes de documentar.",
+    activities: suggestedActivities("Museos", "Lugar"),
     image: "/imagenes/carnaval.jpg",
     imageAlt: "Carnaval de Negros y Blancos de Pasto",
     imageIsIllustrative: false,
@@ -132,6 +165,9 @@ export const places: Place[] = [
     neighborhood: "Suroriente",
     description: "Un mercado popular para explorar productos y sabores cotidianos de la región.",
     story: "Los mercados son una puerta directa a los ingredientes, productos y costumbres de la mesa nariñense.",
+    history: "Historia y fecha de creación del mercado pendientes de verificación con fuentes municipales.",
+    founders: "No hay fundadores o responsables iniciales documentados en esta ficha.",
+    activities: suggestedActivities("Gastronomía", "Lugar"),
     image: "/imagenes/mercado-local.jpg",
     imageAlt: "Puestos de frutas y productos frescos",
     imageIsIllustrative: true,
@@ -152,6 +188,9 @@ export const places: Place[] = [
     neighborhood: "Corregimiento El Encano",
     description: "Paisaje de alta montaña, agua y tradición campesina al oriente de Pasto.",
     story: "El entorno invita a una visita de mayor duración; contempla el traslado desde la ciudad al planear.",
+    history: "La historia del territorio y de sus comunidades debe consultarse con fuentes ambientales y locales antes de publicarse.",
+    founders: "No aplica como fundadores individuales; registrar comunidades y autoridades del territorio con validación local.",
+    activities: suggestedActivities("Naturaleza", "Lugar"),
     image: "/imagenes/laguna-cocha.jpg",
     imageAlt: "Laguna de La Cocha en Nariño",
     imageIsIllustrative: false,

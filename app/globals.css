@@ -43,6 +43,7 @@ a { color: inherit; text-decoration: none; }
 .avatar { display: grid; place-items: center; height: 38px; min-width: 38px; border: 0; border-radius: 50%; background: #e9d3b0; color: #664b31; font-size: 13px; font-weight: 700; }
 .auth-trigger, .secondary-button { display: inline-flex; gap: 8px; align-items: center; justify-content: center; min-height: 40px; padding: 0 13px; border: 1px solid var(--line); border-radius: 3px; background: var(--white); color: var(--forest); font-size: 12px; font-weight: 700; }
 .auth-trigger:hover, .secondary-button:hover { border-color: var(--forest); }
+.auth-register-trigger { display: inline-flex; align-items: center; justify-content: center; min-height: 40px; padding: 0 13px; border: 1px solid var(--forest); border-radius: 3px; background: var(--forest); color: white; font-size: 12px; font-weight: 700; }
 
 .page { width: min(1240px, calc(100% - 84px)); margin: 0 auto; }
 .hero {
@@ -188,6 +189,8 @@ a { color: inherit; text-decoration: none; }
 .auth-links { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px; margin-top: 17px; color: var(--muted); font-size: 11px; }
 .auth-links > button, .auth-links span button, .auth-switch button { display: inline-flex; align-items: center; gap: 4px; padding: 0; border: 0; background: none; color: var(--forest); font-size: inherit; font-weight: 700; }
 .auth-switch { margin: 17px 0 0; color: var(--muted); text-align: center; font-size: 11px; }
+.auth-guest { display: block; width: 100%; margin-top: 15px; padding: 8px; border: 0; background: transparent; color: var(--forest); font-size: 11px; font-weight: 700; }
+.auth-guest:hover { text-decoration: underline; }
 
 .detail-backdrop { position: fixed; z-index: 10; inset: 0; display: grid; place-items: center; padding: 18px; background: rgba(20,35,28,.58); }
 .detail-dialog { position: relative; width: min(560px, 100%); max-height: min(760px, 92vh); overflow: auto; background: var(--white); border-radius: 5px; }
@@ -195,6 +198,18 @@ a { color: inherit; text-decoration: none; }
 .detail-content { padding: 23px; }
 .detail-content h2 { margin: 0; font: 600 31px "Fraunces", serif; }
 .detail-content p { color: var(--muted); font-size: 13px; line-height: 1.7; }
+.detail-facts { display: grid; gap: 10px; margin: 20px 0; }
+.detail-facts section { padding: 13px; border: 1px solid var(--line); background: #fbfaf5; }
+.detail-facts h3 { margin: 0 0 6px; color: var(--forest); font: 600 17px "Fraunces", serif; }
+.detail-facts p { margin: 0; }
+.detail-facts ul { display: grid; gap: 6px; margin: 8px 0; padding-left: 18px; color: var(--muted); font-size: 12px; line-height: 1.55; }
+.detail-facts small, .detail-source { display: block; color: var(--muted); font-size: 10px; line-height: 1.5; }
+.detail-map { margin: 18px 0; }
+.detail-map-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 9px; }
+.detail-map-heading h3 { display: flex; align-items: center; gap: 7px; margin: 0; color: var(--forest); font: 600 17px "Fraunces", serif; }
+.detail-map-heading a { display: inline-flex; align-items: center; gap: 5px; color: var(--forest); font-size: 11px; font-weight: 700; }
+.detail-map iframe { display: block; width: 100%; height: 230px; border: 1px solid var(--line); background: #e7e9e2; }
+.detail-map > p { margin: 6px 0 0; color: var(--muted); font-size: 10px; line-height: 1.5; }
 .detail-close { position: absolute; top: 12px; right: 12px; }
 .mobile-nav { display: none; }
 .error-message { margin-top: 10px; color: #8e3f2c; font-size: 11px; }
@@ -211,6 +226,7 @@ a { color: inherit; text-decoration: none; }
   .app-shell { padding-bottom: 78px; }
   .topbar { height: 64px; padding: 0 18px; }
   .desktop-nav, .header-actions .icon-button { display: none; }
+  .auth-register-trigger { display: none; }
   .auth-trigger { min-height: 36px; padding: 0 10px; font-size: 10px; }
   .profile-account-heading { align-items: flex-start; }
   .profile-account-heading .secondary-button, .profile-account-heading .primary-button { flex: 0 0 auto; min-height: 38px; padding: 0 9px; font-size: 10px; }

@@ -49,7 +49,7 @@ export function AuthDialog({ initialMode = "login", onClose }: { initialMode?: A
     setMessage("");
     setError("");
     if (!supabase) {
-      setError("La autenticación aún no está configurada. Agrega las claves públicas de Supabase al entorno de la aplicación.");
+      setError("Para activar cuentas reales, crea un proyecto Supabase, completa NEXT_PUBLIC_SUPABASE_URL y NEXT_PUBLIC_SUPABASE_ANON_KEY en .env.local y reinicia npm run dev. La guía está en README.md.");
       return;
     }
 
@@ -93,7 +93,7 @@ export function AuthDialog({ initialMode = "login", onClose }: { initialMode?: A
   async function handleGoogleSignIn() {
     setError("");
     if (!supabase) {
-      setError("La autenticación aún no está configurada. Agrega las claves públicas de Supabase al entorno de la aplicación.");
+      setError("Para activar Google, configura primero Supabase y habilita el proveedor Google. Sigue los pasos de README.md.");
       return;
     }
 
@@ -117,22 +117,23 @@ export function AuthDialog({ initialMode = "login", onClose }: { initialMode?: A
         <h2 id="auth-title">{heading.title}</h2>
         <p className="auth-description">{heading.description}</p>
 
-        {mode === "login" && <button className="google-button" type="button" onClick={() => void handleGoogleSignIn()} disabled={busy || !configured}><span className="google-mark">G</span>Continuar con Google</button>}
+        {mode === "login" && <button className="google-button" type="button" onClick={() => void handleGoogleSignIn()} disabled={busy}><span className="google-mark">G</span>Continuar con Google</button>}
         {mode === "login" && <div className="auth-divider"><span>o con tu correo</span></div>}
 
         <form className="auth-form" onSubmit={(event) => void handleSubmit(event)}>
           {mode === "register" && <label className="auth-field"><span>Nombre</span><span className="auth-input-wrap"><UserRound size={16} /><input autoComplete="name" value={name} onChange={(event) => setName(event.target.value)} placeholder="Tu nombre" required maxLength={80} /></span></label>}
-          {mode !== "update-password" && <label className="auth-field"><span>Correo electrónico</span><span className="auth-input-wrap"><AtSign size={16} /><input type="email" autoComplete="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="tu@correo.com" required /></span></label>}
+          {mode !== "update-password" && <label className="auth-field"><span>Correo electrónico</span><span className="auth-input-wrap"><AtSign size={16} /><input type="text" inputMode="email" autoCapitalize="none" autoCorrect="off" spellCheck={false} autoComplete="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="tu@correo.com" required pattern="[^\s@]+@[^\s@]+\.[^\s@]+" /></span></label>}
           {mode !== "recover" && <label className="auth-field"><span>Contraseña</span><span className="auth-input-wrap"><LockKeyhole size={16} /><input type="password" autoComplete={mode === "register" || mode === "update-password" ? "new-password" : "current-password"} value={password} onChange={(event) => setPassword(event.target.value)} placeholder={mode === "update-password" ? "Nueva contraseña" : "Mínimo 8 caracteres"} minLength={8} required /></span></label>}
           {error && <p className="auth-feedback error" role="alert">{error}</p>}
           {message && <p className="auth-feedback success" role="status">{message}</p>}
           {!configured && <p className="auth-setup-note">Falta configurar Supabase para activar las cuentas. La interfaz ya está lista; las instrucciones están en el README.</p>}
-          <button className="primary-button auth-submit" type="submit" disabled={busy || !configured}>{busy ? "Un momento..." : mode === "login" ? "Iniciar sesión" : mode === "register" ? "Crear cuenta" : mode === "recover" ? "Enviar enlace" : "Guardar contraseña"}</button>
+          <button className="primary-button auth-submit" type="submit" disabled={busy}>{busy ? "Un momento..." : mode === "login" ? "Iniciar sesión" : mode === "register" ? "Crear cuenta" : mode === "recover" ? "Enviar enlace" : "Guardar contraseña"}</button>
         </form>
 
         {mode === "login" && <div className="auth-links"><button onClick={() => changeMode("recover")}>¿Olvidaste tu contraseña?</button><span>¿Aún no tienes cuenta? <button onClick={() => changeMode("register")}>Regístrate</button></span></div>}
         {mode === "register" && <p className="auth-switch">¿Ya tienes cuenta? <button onClick={() => changeMode("login")}>Inicia sesión</button></p>}
         {mode === "recover" && <p className="auth-switch"><button onClick={() => changeMode("login")}><ArrowLeft size={14} /> Volver a iniciar sesión</button></p>}
+        {(mode === "login" || mode === "register") && <button className="auth-guest" type="button" onClick={onClose}>Seguir explorando sin cuenta</button>}
       </section>
     </div>
   );

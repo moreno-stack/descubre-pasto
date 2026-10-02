@@ -36,7 +36,11 @@ Incluye inicio, exploración y filtros con conteos, detalle de lugares, favorito
 4. En Supabase > Authentication > URL Configuration, agrega `http://localhost:3000` como Site URL y Redirect URL. Cuando despliegues, agrega también el dominio de Vercel (por ejemplo `https://tu-proyecto.vercel.app/**`). El callback de Google en Google Cloud debe ser el que muestra Supabase para el proveedor, normalmente `https://<project-ref>.supabase.co/auth/v1/callback`.
 5. En Vercel > Project > Settings > Environment Variables, define `NEXT_PUBLIC_SUPABASE_URL` y `NEXT_PUBLIC_SUPABASE_ANON_KEY` para Preview y Production, y vuelve a desplegar.
 
-El flujo implementado incluye inicio de sesión, registro con nombre y confirmación por correo, recuperación y actualización de contraseña, Google OAuth, estado de sesión y cierre de sesión. El alta y OAuth no se completan hasta configurar credenciales y proveedores en Supabase.
+El flujo implementado incluye inicio de sesión, registro con nombre y confirmación por correo, recuperación y actualización de contraseña, Google OAuth, estado de sesión y cierre de sesión. El recorrido del catálogo se puede usar sin cuenta. El alta y OAuth no se completan hasta configurar credenciales y proveedores en Supabase.
+
+## Mapas y fichas de lugar
+
+Las fichas abren una búsqueda incrustada de Google Maps y un enlace a indicaciones. La búsqueda usa las coordenadas disponibles o el nombre del lugar en Pasto; para los lugares sin coordenadas aparece un aviso de ubicación pendiente. La vista básica de mapa no requiere una clave de Google Maps. Las fichas separan historia/origen, fundadores o responsables, y actividades sugeridas; los datos no documentados se señalan para que no se confundan con información verificada.
 
 ## Despliegue en Vercel
 
