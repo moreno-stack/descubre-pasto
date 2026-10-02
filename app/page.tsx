@@ -3,10 +3,12 @@
 import { useMemo, useState } from "react";
 import {
   ArrowRight, Bookmark, BookOpen, Check, Clock3, Compass, Heart, Landmark,
-  Leaf, MapPin, MessageCircle, Mountain, Navigation, Search, Send, Sparkles,
+  MapPin, Mountain, Navigation, Search, Send, Sparkles,
   Utensils, X,
 } from "lucide-react";
 import { interests, placeCategories, places, type Interest, type Place, type PlaceCategory } from "@/lib/places";
+import { ExploreGallery, gallerySections, homeGallerySections } from "@/components/ExploreGallery";
+import { PlaceGrid } from "@/components/PlaceGrid";
 
 type View = "Inicio" | "Explorar" | "Recorrido" | "Favoritos" | "Perfil";
 type RouteStop = { id: string; name: string; category: Interest; minutes: number; distanceKm: number; reason: string; schedule: string; verified: boolean; order: number };
@@ -25,6 +27,8 @@ export default function Home() {
   const [view, setView] = useState<View>("Inicio");
   const [category, setCategory] = useState<PlaceCategory | Interest | "Todas">("Todas");
   const [categoryMode, setCategoryMode] = useState<"all" | "category" | "interest">("all");
+  const [selectedCategories, setSelectedCategories] = useState<PlaceCategory[] | null>(null);
+  const [showGallery, setShowGallery] = useState(true);
   const [visibleCount, setVisibleCount] = useState(18);
   const [search, setSearch] = useState("");
   const [favorites, setFavorites] = useState<string[]>([]);
@@ -41,11 +45,12 @@ export default function Home() {
   const [error, setError] = useState("");
 
   const filteredPlaces = useMemo(() => places.filter((place) => {
-    const matchesCategory = categoryMode === "all" || (categoryMode === "category" ? place.category === category : place.interest === category);
+    const matchesCategory = categoryMode === "all"
+      || (categoryMode === "category" ? selectedCategories?.includes(place.category) ?? place.category === category : place.interest === category);
     const matchesSearch = `${place.name} ${place.neighborhood} ${place.description}`.toLocaleLowerCase("es").includes(search.toLocaleLowerCase("es"));
     const matchesView = view !== "Favoritos" || favorites.includes(place.id);
     return matchesCategory && matchesSearch && matchesView;
-  }), [category, categoryMode, favorites, search, view]);
+  }), [category, categoryMode, favorites, search, selectedCategories, view]);
   const visiblePlaces = filteredPlaces.slice(0, visibleCount);
 
   function toggleFavorite(id: string) {
@@ -76,6 +81,18 @@ export default function Home() {
   function goToExplore(nextCategory: PlaceCategory | Interest | "Todas" = "Todas", mode: "all" | "category" | "interest" = nextCategory === "Todas" ? "all" : "interest") {
     setCategory(nextCategory);
     setCategoryMode(mode);
+    setSelectedCategories(null);
+    setShowGallery(mode === "all");
+    setVisibleCount(18);
+    setSearch("");
+    setView("Explorar");
+  }
+
+  function exploreCategories(categories: PlaceCategory[]) {
+    setCategory(categories[0] ?? "Todas");
+    setCategoryMode(categories.length ? "category" : "all");
+    setSelectedCategories(categories.length ? categories : null);
+    setShowGallery(false);
     setVisibleCount(18);
     setSearch("");
     setView("Explorar");
@@ -99,7 +116,7 @@ export default function Home() {
           <span className="brand-name">DESCUBRE <span>PASTO</span></span>
         </button>
         <nav className="desktop-nav" aria-label="Navegación principal">
-          {navItems.slice(0, 3).map(({ label }) => <button key={label} className={`nav-link ${view === label ? "active" : ""}`} onClick={() => setView(label)}>{label}</button>)}
+          {navItems.slice(0, 3).map(({ label }) => <button key={label} className={`nav-link ${view === label ? "active" : ""}`} onClick={() => label === "Explorar" ? goToExplore() : setView(label)}>{label}</button>)}
         </nav>
         <div className="header-actions">
           <button className="icon-button" aria-label="Abrir favoritos" onClick={() => setView("Favoritos")}><Heart size={17} /></button>
@@ -129,8 +146,8 @@ export default function Home() {
           </section>
 
           <section className="section">
-            <div className="section-heading"><div><h2>Para empezar a explorar</h2><p>Una selección de lugares para conocer la ciudad.</p></div><button className="text-button" onClick={() => goToExplore()}>Ver todos <ArrowRight size={15} /></button></div>
-            <PlaceGrid items={places.slice(0, 3)} favorites={favorites} onFavorite={toggleFavorite} onSelect={setSelectedPlace} />
+            <div className="section-heading"><div><h2>Encuentra tu próximo lugar</h2><p>Fotografías de Pasto organizadas por tipo de experiencia.</p></div><button className="text-button" onClick={() => goToExplore()}>Ver catálogo <ArrowRight size={15} /></button></div>
+            <ExploreGallery sections={homeGallerySections} onSelect={setSelectedPlace} onExplore={exploreCategories} />
           </section>
 
           <section className="ai-panel" id="recomendador">
@@ -144,9 +161,11 @@ export default function Home() {
 
         {view === "Explorar" && <>
           <div className="subpage-title"><div><p className="eyebrow">LUGARES Y EXPERIENCIAS</p><h1>Explora Pasto</h1><p>{filteredPlaces.length} registros · encuentra por nombre, zona o categoría.</p></div><label className="search-box"><Search size={17} /><input value={search} onChange={(event) => { setSearch(event.target.value); setVisibleCount(18); }} placeholder="Buscar lugares" /></label></div>
-          <div className="filter-row"><button className={`filter-chip ${categoryMode === "all" ? "active" : ""}`} onClick={() => { setCategory("Todas"); setCategoryMode("all"); setVisibleCount(18); }}>Todos ({places.length})</button>{placeCategories.map((item) => <button key={item} className={`filter-chip ${categoryMode === "category" && category === item ? "active" : ""}`} onClick={() => { setCategory(item); setCategoryMode("category"); setVisibleCount(18); }}>{item} ({places.filter((place) => place.category === item).length})</button>)}</div>
-          <PlaceGrid items={visiblePlaces} favorites={favorites} onFavorite={toggleFavorite} onSelect={setSelectedPlace} />
-          {filteredPlaces.length > visiblePlaces.length && <button className="text-button" style={{ margin: "22px auto", display: "flex" }} onClick={() => setVisibleCount((count) => count + 18)}>Mostrar más ({filteredPlaces.length - visiblePlaces.length} restantes) <ArrowRight size={15} /></button>}
+          <div className="filter-row"><button className={`filter-chip ${categoryMode === "all" ? "active" : ""}`} onClick={() => { setCategory("Todas"); setCategoryMode("all"); setSelectedCategories(null); setShowGallery(true); setVisibleCount(18); }}>Todos ({places.length})</button>{placeCategories.map((item) => <button key={item} className={`filter-chip ${categoryMode === "category" && selectedCategories?.includes(item) ? "active" : ""}`} onClick={() => { setCategory(item); setCategoryMode("category"); setSelectedCategories([item]); setShowGallery(false); setVisibleCount(18); }}>{item} ({places.filter((place) => place.category === item).length})</button>)}</div>
+          {showGallery && !search ? <ExploreGallery sections={gallerySections} onSelect={setSelectedPlace} onExplore={exploreCategories} /> : <>
+            <PlaceGrid items={visiblePlaces} favorites={favorites} onFavorite={toggleFavorite} onSelect={setSelectedPlace} />
+            {filteredPlaces.length > visiblePlaces.length && <button className="text-button" style={{ margin: "22px auto", display: "flex" }} onClick={() => setVisibleCount((count) => count + 18)}>Mostrar más ({filteredPlaces.length - visiblePlaces.length} restantes) <ArrowRight size={15} /></button>}
+          </>}
           {!filteredPlaces.length && <div className="favorite-empty"><p>No encontramos lugares con esos filtros. Prueba otra categoría o búsqueda.</p></div>}
         </>}
 
@@ -211,13 +230,9 @@ export default function Home() {
         </>}
       </div>
 
-      <nav className="mobile-nav" aria-label="Navegación móvil">{navItems.map(({ label, icon: Icon }) => <button key={label} className={view === label ? "active" : ""} onClick={() => setView(label)} aria-label={label}><Icon size={19} /><span>{label}</span></button>)}</nav>
+      <nav className="mobile-nav" aria-label="Navegación móvil">{navItems.map(({ label, icon: Icon }) => <button key={label} className={view === label ? "active" : ""} onClick={() => label === "Explorar" ? goToExplore() : setView(label)} aria-label={label}><Icon size={19} /><span>{label}</span></button>)}</nav>
 
       {selectedPlace && <div className="detail-backdrop" role="presentation" onClick={() => setSelectedPlace(null)}><section className="detail-dialog" role="dialog" aria-modal="true" aria-labelledby="detail-title" onClick={(event) => event.stopPropagation()}><div className="detail-photo" style={{ backgroundImage: `url('${selectedPlace.image}')` }} /><button className="icon-button detail-close" onClick={() => setSelectedPlace(null)} aria-label="Cerrar detalle"><X size={18} /></button><div className="detail-content"><p className="eyebrow">{selectedPlace.category} · {selectedPlace.neighborhood}</p><h2 id="detail-title">{selectedPlace.name}</h2><p>{selectedPlace.description}</p><p>{selectedPlace.story}</p><div className="place-meta">{selectedPlace.visitMinutes && <span><Clock3 size={13} /> Visita sugerida: {selectedPlace.visitMinutes} min</span>}<span><MapPin size={13} /> {selectedPlace.latitude === undefined ? "Ubicación por verificar" : selectedPlace.neighborhood}</span></div><p className="notice">{selectedPlace.verified ? selectedPlace.schedule : "Registro pendiente de verificación: confirmar dirección, coordenadas, horarios, fuente y condiciones de acceso antes de visitarlo."}</p><button className="primary-button" style={{ marginTop: 12 }} onClick={() => toggleFavorite(selectedPlace.id)}>{favorites.includes(selectedPlace.id) ? <Check size={15} /> : <Heart size={15} />}{favorites.includes(selectedPlace.id) ? "Guardado" : "Guardar lugar"}</button></div></section></div>}
     </main>
   );
-}
-
-function PlaceGrid({ items, favorites, onFavorite, onSelect }: { items: Place[]; favorites: string[]; onFavorite: (id: string) => void; onSelect: (place: Place) => void }) {
-  return <div className="place-grid">{items.map((place) => <article className="place-card" key={place.id}><button className="place-image" style={{ backgroundImage: `url('${place.image}')` }} onClick={() => onSelect(place)} aria-label={`Ver ${place.name}`}><span className="place-tag">{place.kind === "Plato típico" ? "Plato típico" : place.category}</span></button><button className={`favorite-button ${favorites.includes(place.id) ? "saved" : ""}`} onClick={() => onFavorite(place.id)} aria-label={favorites.includes(place.id) ? "Quitar de favoritos" : "Guardar en favoritos"}><Heart size={16} fill={favorites.includes(place.id) ? "currentColor" : "none"} /></button><div className="place-info"><div className="place-title-row"><button className="text-button" style={{ padding: 0, textAlign: "left" }} onClick={() => onSelect(place)}><h3>{place.name}</h3></button></div><p>{place.description}</p><div className="place-meta"><span><MapPin size={12} />{place.latitude === undefined ? "Ubicación pendiente" : place.neighborhood}</span>{place.visitMinutes && <span><Clock3 size={12} />{place.visitMinutes} min</span>}</div></div></article>)}</div>;
 }

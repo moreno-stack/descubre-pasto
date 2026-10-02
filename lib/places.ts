@@ -1,3 +1,5 @@
+import { imageForPlace, isIllustrativeImage } from "@/lib/placeImages";
+
 export type Interest = "Cultura" | "Historia" | "Gastronomía" | "Naturaleza";
 export type PlaceCategory =
   | "Templos"
@@ -21,6 +23,7 @@ export type Place = {
   story: string;
   image: string;
   imageAlt: string;
+  imageIsIllustrative: boolean;
   latitude?: number;
   longitude?: number;
   visitMinutes?: number;
@@ -35,24 +38,11 @@ export const placeCategories: PlaceCategory[] = [
   "Templos", "Plazas", "Parques", "Centros comerciales", "Puentes", "Museos", "Cultura", "Naturaleza", "Gastronomía",
 ];
 
-const categoryImages: Record<PlaceCategory, { url: string; alt: string }> = {
-  Templos: { url: "https://images.unsplash.com/photo-1548013146-72479768bada?auto=format&fit=crop&w=1000&q=85", alt: "Arquitectura religiosa" },
-  Plazas: { url: "https://images.unsplash.com/photo-1519608487953-e999c86e7455?auto=format&fit=crop&w=1000&q=85", alt: "Espacio urbano" },
-  Parques: { url: "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?auto=format&fit=crop&w=1000&q=85", alt: "Vegetación de parque" },
-  "Centros comerciales": { url: "https://images.unsplash.com/photo-1519567241046-7f570eee3ce6?auto=format&fit=crop&w=1000&q=85", alt: "Zona comercial" },
-  Puentes: { url: "https://images.unsplash.com/photo-1519608487953-e999c86e7455?auto=format&fit=crop&w=1000&q=85", alt: "Paisaje urbano" },
-  Museos: { url: "https://images.unsplash.com/photo-1566127992631-137a642a90f4?auto=format&fit=crop&w=1000&q=85", alt: "Interior de museo" },
-  Cultura: { url: "https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?auto=format&fit=crop&w=1000&q=85", alt: "Expresión cultural" },
-  Naturaleza: { url: "https://images.unsplash.com/photo-1470770841072-f978cf4d019e?auto=format&fit=crop&w=1000&q=85", alt: "Paisaje natural" },
-  "Gastronomía": { url: "https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=1000&q=85", alt: "Productos gastronómicos" },
-};
-
 function slugify(value: string) {
   return value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
 }
 
 function pendingEntry(name: string, category: PlaceCategory, interest: Interest, kind: Place["kind"] = "Lugar"): Place {
-  const image = categoryImages[category];
   return {
     id: `${slugify(category)}-${slugify(name)}`,
     name,
@@ -62,8 +52,9 @@ function pendingEntry(name: string, category: PlaceCategory, interest: Interest,
     neighborhood: "Sector por confirmar",
     description: "Registro inicial del inventario; descripción y datos operativos pendientes de verificación.",
     story: "Antes de recomendar una visita, se deben confirmar dirección, coordenadas, fuente, horario y condiciones de acceso.",
-    image: image.url,
-    imageAlt: image.alt,
+    image: imageForPlace(name, category),
+    imageAlt: isIllustrativeImage(name) ? `Foto de referencia para ${category}` : `Fotografía de ${name}`,
+    imageIsIllustrative: isIllustrativeImage(name),
     budget: "Por verificar",
     schedule: "Horario por verificar",
     verified: false,
@@ -81,8 +72,9 @@ export const places: Place[] = [
     neighborhood: "Centro histórico",
     description: "Un buen punto de partida para reconocer el corazón cívico de Pasto.",
     story: "La plaza reúne edificios representativos y conecta con recorridos a pie por el centro.",
-    image: "https://images.unsplash.com/photo-1519608487953-e999c86e7455?auto=format&fit=crop&w=1000&q=85",
-    imageAlt: "Cielo de montaña al atardecer",
+    image: "/imagenes/plaza-narino.jpg",
+    imageAlt: "Vista diurna de la Plaza de Nariño",
+    imageIsIllustrative: false,
     latitude: 1.2136,
     longitude: -77.2811,
     visitMinutes: 35,
@@ -100,8 +92,9 @@ export const places: Place[] = [
     neighborhood: "Centro histórico",
     description: "Una casa museo para acercarse a oficios, objetos y memoria regional.",
     story: "La visita permite conocer expresiones del trabajo artesanal y la vida tradicional nariñense.",
-    image: "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=1000&q=85",
-    imageAlt: "Patio interior de arquitectura tradicional",
+    image: imageForPlace("Museo Taminango", "Museos"),
+    imageAlt: "Foto de referencia de un espacio museístico de Pasto",
+    imageIsIllustrative: true,
     latitude: 1.2171,
     longitude: -77.2792,
     visitMinutes: 55,
@@ -119,8 +112,9 @@ export const places: Place[] = [
     neighborhood: "Pandiaco",
     description: "Un espacio dedicado a las expresiones artísticas del Carnaval de Negros y Blancos.",
     story: "Máscaras, carrozas y saberes artesanales forman parte de una celebración reconocida por la UNESCO.",
-    image: "https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?auto=format&fit=crop&w=1000&q=85",
-    imageAlt: "Celebración cultural con color y movimiento",
+    image: "/imagenes/carnaval.jpg",
+    imageAlt: "Carnaval de Negros y Blancos de Pasto",
+    imageIsIllustrative: false,
     latitude: 1.2292,
     longitude: -77.2784,
     visitMinutes: 60,
@@ -138,8 +132,9 @@ export const places: Place[] = [
     neighborhood: "Suroriente",
     description: "Un mercado popular para explorar productos y sabores cotidianos de la región.",
     story: "Los mercados son una puerta directa a los ingredientes, productos y costumbres de la mesa nariñense.",
-    image: "https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=1000&q=85",
+    image: "/imagenes/mercado-local.jpg",
     imageAlt: "Puestos de frutas y productos frescos",
+    imageIsIllustrative: true,
     latitude: 1.2055,
     longitude: -77.2692,
     visitMinutes: 50,
@@ -157,8 +152,9 @@ export const places: Place[] = [
     neighborhood: "Corregimiento El Encano",
     description: "Paisaje de alta montaña, agua y tradición campesina al oriente de Pasto.",
     story: "El entorno invita a una visita de mayor duración; contempla el traslado desde la ciudad al planear.",
-    image: "https://images.unsplash.com/photo-1470770841072-f978cf4d019e?auto=format&fit=crop&w=1000&q=85",
-    imageAlt: "Laguna rodeada de montañas verdes",
+    image: "/imagenes/laguna-cocha.jpg",
+    imageAlt: "Laguna de La Cocha en Nariño",
+    imageIsIllustrative: false,
     latitude: 1.0962,
     longitude: -77.1517,
     visitMinutes: 150,
@@ -168,8 +164,8 @@ export const places: Place[] = [
     scope: "Municipio",
   },
   ...[
-    "Catedral Sagrado Corazón de Jesús", "Templo de Cristo Rey - Jesuitas", "Parroquia San Felipe Neri",
-    "Parroquia de Santiago Apóstol", "Iglesia de San Juan Bautista", "Iglesia de San Andrés",
+    "Catedral Sagrado Corazón de Jesús", "Templo de Cristo Rey - Jesuitas", "Iglesia de San Andrés",
+    "Parroquia San Felipe Neri", "Parroquia de Santiago Apóstol", "Iglesia de San Juan Bautista",
     "Iglesia de San Agustín", "Iglesia de La Merced", "Iglesia de La Panadería", "Iglesia de Fátima",
     "Iglesia del Carmen", "Iglesia de Jesús del Río", "Iglesia de San Sebastián", "Iglesia de San Felipe",
     "Iglesia del Niño Jesús de Praga", "Iglesia de Maridíaz", "Iglesia del Obrero", "Iglesia de San Antonio",
@@ -177,15 +173,15 @@ export const places: Place[] = [
     "Iglesia de la Inmaculada Concepción", "Iglesia de la Sagrada Familia",
   ].map((name) => pendingEntry(name, "Templos", "Historia")),
   ...[
-    "Plaza del Carnaval", "Plazoleta de San Agustín", "Plazoleta Cristo Rey", "Plazoleta de la Catedral",
-    "Plazoleta de San Juan", "Plazoleta de La Panadería", "Plazoleta de La Merced", "Plazoleta de San Andrés",
+    "Plazoleta de la Catedral", "Plazoleta de San Juan", "Plaza del Carnaval", "Plazoleta de San Agustín",
+    "Plazoleta Cristo Rey", "Plazoleta de La Panadería", "Plazoleta de La Merced", "Plazoleta de San Andrés",
     "Plazoleta de Bomboná", "Plazoleta de Lourdes", "Plazoleta del Museo Taminango",
     "Plazoleta Banco de la República", "Plazoleta Galán", "Plazoleta Éxito", "Plazoleta Avenida Boyacá",
     "Plazoleta San Andresito",
   ].map((name) => pendingEntry(name, "Plazas", "Historia")),
   ...[
-    "Parque Infantil", "Parque Bolívar", "Parque Ecológico Aurelio Arturo", "Parque Ambiental Rumipamba",
-    "Parque de Santiago", "Parque de San Felipe", "Parque de Palermo", "Parque de La Aurora", "Parque La Minga",
+    "Parque Infantil", "Parque de San Felipe", "Parque de La Aurora", "Parque Bolívar",
+    "Parque Ecológico Aurelio Arturo", "Parque Ambiental Rumipamba", "Parque de Santiago", "Parque de Palermo", "Parque La Minga",
     "Parque Caracha", "Parque Las Piedras", "Parque Versalles", "Parque Las Brisas", "Parque Las Mercedes",
     "Parque Laureano Gómez", "Parque Paraná", "Parque El Bosque", "Parque Villa Sofía", "Parque La Esmeralda",
     "Parque Barrio Navarrete", "Parque Maridíaz", "Parque Las Cuadras", "Parque Recreativo Chapalito",
