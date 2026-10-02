@@ -26,7 +26,17 @@ El inventario inicial contiene 116 registros: templos, plazas, parques, centros 
 
 ## Alcance de esta entrega
 
-Incluye inicio, exploración y filtros con conteos, detalle de lugares, favoritos locales, preferencias de intereses y creación de recorridos. Registro/autenticación, persistencia de cuenta, base de datos, administración editorial, verificación del inventario, proveedor de mapas y publicación en tiendas móviles quedan para módulos posteriores. La geolocalización del navegador es opcional y se solicita únicamente al seleccionarla como punto de inicio.
+Incluye inicio, exploración y filtros con conteos, detalle de lugares, favoritos locales, preferencias de intereses, creación de recorridos y autenticación Supabase por correo/contraseña y Google OAuth. El catálogo, favoritos y preferencias todavía no se sincronizan con una base de datos de usuario. La administración editorial, verificación del inventario, proveedor de mapas y publicación en tiendas móviles quedan para módulos posteriores. La geolocalización del navegador es opcional y se solicita únicamente al seleccionarla como punto de inicio.
+
+## Configurar inicio de sesión
+
+1. Crea un proyecto en Supabase y copia la URL del proyecto y su clave pública `anon` desde Project Settings > API.
+2. En local, copia `.env.example` a `.env.local` y completa `NEXT_PUBLIC_SUPABASE_URL` y `NEXT_PUBLIC_SUPABASE_ANON_KEY`. Estas son claves públicas del cliente; nunca pongas una `service_role` en variables `NEXT_PUBLIC_*` ni en el navegador.
+3. En Supabase > Authentication > Providers, habilita Email para crear cuentas y restablecer contraseñas. Si deseas Google, habilita el proveedor Google y configura su Client ID y Client Secret desde Google Cloud Console.
+4. En Supabase > Authentication > URL Configuration, agrega `http://localhost:3000` como Site URL y Redirect URL. Cuando despliegues, agrega también el dominio de Vercel (por ejemplo `https://tu-proyecto.vercel.app/**`). El callback de Google en Google Cloud debe ser el que muestra Supabase para el proveedor, normalmente `https://<project-ref>.supabase.co/auth/v1/callback`.
+5. En Vercel > Project > Settings > Environment Variables, define `NEXT_PUBLIC_SUPABASE_URL` y `NEXT_PUBLIC_SUPABASE_ANON_KEY` para Preview y Production, y vuelve a desplegar.
+
+El flujo implementado incluye inicio de sesión, registro con nombre y confirmación por correo, recuperación y actualización de contraseña, Google OAuth, estado de sesión y cierre de sesión. El alta y OAuth no se completan hasta configurar credenciales y proveedores en Supabase.
 
 ## Despliegue en Vercel
 

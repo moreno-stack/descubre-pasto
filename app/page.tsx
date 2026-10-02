@@ -1,14 +1,17 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
-  ArrowRight, Bookmark, BookOpen, Check, Clock3, Compass, Heart, Landmark,
-  MapPin, Mountain, Navigation, Search, Send, Sparkles,
+  ArrowRight, Bookmark, BookOpen, Check, Clock3, Compass, Heart, Landmark, LogIn, LogOut,
+  MapPin, Mountain, Navigation, Search, Send, Sparkles, UserRound,
   Utensils, X,
 } from "lucide-react";
+import type { User } from "@supabase/supabase-js";
 import { interests, placeCategories, places, type Interest, type Place, type PlaceCategory } from "@/lib/places";
 import { ExploreGallery, gallerySections, homeGallerySections } from "@/components/ExploreGallery";
 import { PlaceGrid } from "@/components/PlaceGrid";
+import { AuthDialog, type AuthMode } from "@/components/AuthDialog";
+import { getSupabaseClient } from "@/lib/supabase";
 
 type View = "Inicio" | "Explorar" | "Recorrido" | "Favoritos" | "Perfil";
 type RouteStop = { id: string; name: string; category: Interest; minutes: number; distanceKm: number; reason: string; schedule: string; verified: boolean; order: number };
@@ -25,6 +28,9 @@ const promptIdeas = ["Cultura e historia, 3 horas", "Comida típica y poco presu
 
 export default function Home() {
   const [view, setView] = useState<View>("Inicio");
+  const [user, setUser] = useState<User | null>(null);
+  const [authOpen, setAuthOpen] = useState(false);
+  const [authMode, setAuthMode] = useState<AuthMode>("login");
   const [category, setCategory] = useState<PlaceCategory | Interest | "Todas">("Todas");
   const [categoryMode, setCategoryMode] = useState<"all" | "category" | "interest">("all");
   const [selectedCategories, setSelectedCategories] = useState<PlaceCategory[] | null>(null);
@@ -43,6 +49,24 @@ export default function Home() {
   const [recommendation, setRecommendation] = useState<Recommendation | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    const supabase = getSupabaseClient();
+    if (!supabase) return;
+
+    void supabase.auth.getSession().then(({ data, error: sessionError }) => {
+      if (!sessionError) setUser(data.session?.user ?? null);
+    });
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      setUser(session?.user ?? null);
+      if (event === "PASSWORD_RECOVERY") {
+        setAuthMode("update-password");
+        setAuthOpen(true);
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
 
   const filteredPlaces = useMemo(() => places.filter((place) => {
     const matchesCategory = categoryMode === "all"
@@ -103,6 +127,22 @@ export default function Home() {
     void generateRecommendation(prompt);
   }
 
+  function openAuth(mode: AuthMode = "login") {
+    setAuthMode(mode);
+    setAuthOpen(true);
+  }
+
+  async function signOut() {
+    const supabase = getSupabaseClient();
+    if (!supabase) return;
+    const { error: signOutError } = await supabase.auth.signOut();
+    if (signOutError) setError(signOutError.message);
+    else setView("Inicio");
+  }
+
+  const displayName = user?.user_metadata?.display_name ?? user?.email?.split("@")[0] ?? "Explorador";
+  const initials = displayName.split(/[\s._-]+/).filter(Boolean).slice(0, 2).map((part: string) => part[0]).join("").toLocaleUpperCase("es") || "VP";
+
   const navItems: { label: View; icon: typeof Compass }[] = [
     { label: "Inicio", icon: Compass }, { label: "Explorar", icon: Search },
     { label: "Recorrido", icon: Navigation }, { label: "Favoritos", icon: Heart }, { label: "Perfil", icon: Bookmark },
@@ -120,7 +160,9 @@ export default function Home() {
         </nav>
         <div className="header-actions">
           <button className="icon-button" aria-label="Abrir favoritos" onClick={() => setView("Favoritos")}><Heart size={17} /></button>
-          <button className="avatar" aria-label="Abrir perfil" onClick={() => setView("Perfil")}>VP</button>
+          {user
+            ? <button className="avatar" aria-label={`Abrir perfil de ${displayName}`} onClick={() => setView("Perfil")}>{initials}</button>
+            : <button className="auth-trigger" onClick={() => openAuth("login")}><LogIn size={15} /><span>Iniciar sesión</span></button>}
         </div>
       </header>
 
@@ -225,14 +267,20 @@ export default function Home() {
         </>}
 
         {view === "Perfil" && <>
-          <div className="subpage-title"><div><p className="eyebrow">TU EXPERIENCIA</p><h1>Mi perfil</h1><p>Personaliza las sugerencias para que se parezcan más a ti.</p></div></div>
-          <section className="profile-panel"><h2>Viajera curiosa</h2><p style={{ color: "var(--muted)", fontSize: 12 }}>Edita tus intereses cuando quieras.</p><div className="profile-grid"><div className="profile-stat"><strong>{favorites.length}</strong><span>Lugares guardados</span></div><div className="profile-stat"><strong>{selectedInterests.length}</strong><span>Intereses activos</span></div></div><div className="field" style={{ marginTop: 20 }}><label>Mis intereses</label><div className="interest-options">{interests.map((item) => <label className="interest-option" key={item}><input type="checkbox" checked={selectedInterests.includes(item)} onChange={() => setSelectedInterests((current) => current.includes(item) ? current.filter((interest) => interest !== item) : [...current, item])} />{item}</label>)}</div></div><p className="notice">El perfil de esta versión es local a este dispositivo. El registro y la sincronización de cuenta se incorporarán en la siguiente fase.</p></section>
+          <div className="subpage-title"><div><p className="eyebrow">TU EXPERIENCIA</p><h1>{user ? "Mi perfil" : "Tu perfil"}</h1><p>Personaliza las sugerencias para que se parezcan más a ti.</p></div></div>
+          <section className="profile-panel">
+            <div className="profile-account-heading"><div><h2>{user ? displayName : "Explora como visitante"}</h2><p style={{ color: "var(--muted)", fontSize: 12 }}>{user?.email ?? "Inicia sesión o crea una cuenta para empezar."}</p></div>{user ? <button className="secondary-button" onClick={() => void signOut()}><LogOut size={15} /> Cerrar sesión</button> : <button className="primary-button" onClick={() => openAuth("register")}><UserRound size={15} /> Crear cuenta</button>}</div>
+            <div className="profile-grid"><div className="profile-stat"><strong>{favorites.length}</strong><span>Lugares guardados en este dispositivo</span></div><div className="profile-stat"><strong>{selectedInterests.length}</strong><span>Intereses activos</span></div></div>
+            <div className="field" style={{ marginTop: 20 }}><label>Mis intereses</label><div className="interest-options">{interests.map((item) => <label className="interest-option" key={item}><input type="checkbox" checked={selectedInterests.includes(item)} onChange={() => setSelectedInterests((current) => current.includes(item) ? current.filter((interest) => interest !== item) : [...current, item])} />{item}</label>)}</div></div>
+            <p className="notice">La cuenta se autentica con Supabase. Los favoritos y preferencias todavía se guardan localmente y no se sincronizan entre dispositivos.</p>
+          </section>
         </>}
       </div>
 
       <nav className="mobile-nav" aria-label="Navegación móvil">{navItems.map(({ label, icon: Icon }) => <button key={label} className={view === label ? "active" : ""} onClick={() => label === "Explorar" ? goToExplore() : setView(label)} aria-label={label}><Icon size={19} /><span>{label}</span></button>)}</nav>
 
       {selectedPlace && <div className="detail-backdrop" role="presentation" onClick={() => setSelectedPlace(null)}><section className="detail-dialog" role="dialog" aria-modal="true" aria-labelledby="detail-title" onClick={(event) => event.stopPropagation()}><div className="detail-photo" style={{ backgroundImage: `url('${selectedPlace.image}')` }} /><button className="icon-button detail-close" onClick={() => setSelectedPlace(null)} aria-label="Cerrar detalle"><X size={18} /></button><div className="detail-content"><p className="eyebrow">{selectedPlace.category} · {selectedPlace.neighborhood}</p><h2 id="detail-title">{selectedPlace.name}</h2><p>{selectedPlace.description}</p><p>{selectedPlace.story}</p><div className="place-meta">{selectedPlace.visitMinutes && <span><Clock3 size={13} /> Visita sugerida: {selectedPlace.visitMinutes} min</span>}<span><MapPin size={13} /> {selectedPlace.latitude === undefined ? "Ubicación por verificar" : selectedPlace.neighborhood}</span></div><p className="notice">{selectedPlace.verified ? selectedPlace.schedule : "Registro pendiente de verificación: confirmar dirección, coordenadas, horarios, fuente y condiciones de acceso antes de visitarlo."}</p><button className="primary-button" style={{ marginTop: 12 }} onClick={() => toggleFavorite(selectedPlace.id)}>{favorites.includes(selectedPlace.id) ? <Check size={15} /> : <Heart size={15} />}{favorites.includes(selectedPlace.id) ? "Guardado" : "Guardar lugar"}</button></div></section></div>}
+      {authOpen && <AuthDialog initialMode={authMode} onClose={() => setAuthOpen(false)} />}
     </main>
   );
 }
