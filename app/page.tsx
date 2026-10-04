@@ -181,8 +181,10 @@ export default function Home() {
               muted
               loop
               playsInline
-              poster="/imagenes/Descubre Pasto_ Cultura y Naturaleza.png"
+              poster="/imagenes/portada-bienvenida.jpg"
             >
+              <source src="/videos/pasto-discover.mp4" type="video/mp4" />
+              {/* Fallback a video de ejemplo si no hay video local */}
               <source src="https://videos.pexels.com/video-files/3571264/3571264-sd_640_360_30fps.mp4" type="video/mp4" />
             </video>
             <div className="hero-video-overlay" />

@@ -16,9 +16,35 @@ npm run typecheck
 npm run build
 ```
 
+## 🎯 Nuevas Características
+
+### 🤖 Asistente de IA con Groq
+El sistema ahora utiliza la API de Groq (Llama 3.3 70B) para:
+- **Interpretación inteligente de consultas**: Entiende mejor las peticiones del usuario
+- **Optimización de rutas**: Crea rutas turísticas más lógicas y personalizadas
+- **Análisis de preferencias**: Detecta automáticamente intereses del usuario
+
+**Configuración**: La API key se configura en `.env.local`:
+```bash
+GROQ_API_KEY=tu_api_key_aquí
+```
+
+### 🎥 Video en la Portada
+El hero de la página principal ahora soporta video de fondo:
+- **Ubicación**: Coloca tu video en `public/videos/pasto-discover.mp4`
+- **Fallback automático**: Si no hay video local, usa un video de ejemplo
+- **Optimizado**: Autoplay, loop, y muted para mejor experiencia
+- **Ver instrucciones completas**: `public/videos/README.md`
+
 ## Recomendaciones
 
-`POST /api/recommend` interpreta intereses, tiempo y presupuesto con reglas locales, consulta el catálogo de `lib/places.ts` y crea una ruta que cabe en el tiempo indicado. La selección se limita a lugares del catálogo y explica el motivo de cada parada. No requiere claves ni servicios de IA externos.
+`POST /api/recommend` ahora utiliza **Groq AI** para interpretar intereses, tiempo y presupuesto de forma más inteligente. El sistema:
+1. Analiza el prompt con IA para extraer intenciones
+2. Consulta el catálogo de `lib/places.ts`
+3. Optimiza la ruta usando IA considerando distancias y preferencias
+4. Explica el motivo de cada parada
+
+Si la IA no está disponible, usa automáticamente un sistema de reglas como fallback.
 
 ## Catálogo inicial
 
@@ -34,7 +60,7 @@ La primera pantalla es una portada con opciones para iniciar sesión o crear cue
 
 Las cuentas se guardan solo en ese navegador y dispositivo. La contraseña se deriva con PBKDF2 y no se guarda en texto claro; aun así, este modo es solo para demostración: no verifica correos, no permite recuperar contraseñas por email, no sincroniza entre dispositivos y los datos se borran al limpiar el almacenamiento del navegador.
 
-La portada muestra `public/imagenes/portada-pasto.jpg` si ese archivo está presente. El proyecto incluye un fondo de respaldo de Galeras mientras se agrega la imagen final.
+La portada muestra un **video de fondo** (si está disponible en `public/videos/pasto-discover.mp4`) con el texto "Pasto se descubre paso a paso". Si no hay video, usa una imagen de respaldo.
 
 ## Mapas y fichas de lugar
 
@@ -42,4 +68,13 @@ Las fichas abren una búsqueda incrustada de Google Maps y un enlace a indicacio
 
 ## Despliegue en Vercel
 
-Importa el repositorio en Vercel y conserva los comandos estándar de Next.js (`npm install` y `npm run build`). Esta versión no necesita variables de entorno.
+Importa el repositorio en Vercel y agrega la variable de entorno:
+- `GROQ_API_KEY`: Tu clave de API de Groq
+
+Conserva los comandos estándar de Next.js (`npm install` y `npm run build`).
+
+## 📦 Dependencias Principales
+- **Next.js 15.5**: Framework React
+- **groq-sdk**: Cliente para API de Groq AI
+- **lucide-react**: Iconos
+- **TypeScript**: Tipado estático
