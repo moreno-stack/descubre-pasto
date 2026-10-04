@@ -296,7 +296,62 @@ export default function Home() {
 
       <nav className="mobile-nav" aria-label="Navegación móvil">{navItems.map(({ label, icon: Icon }) => <button key={label} className={view === label ? "active" : ""} onClick={() => label === "Explorar" ? goToExplore() : setView(label)} aria-label={label}><Icon size={19} /><span>{label}</span></button>)}</nav>
 
-      {selectedPlace && <div className="detail-backdrop" role="presentation" onClick={() => setSelectedPlace(null)}><section className="detail-dialog" role="dialog" aria-modal="true" aria-labelledby="detail-title" onClick={(event) => event.stopPropagation()}><div className="detail-photo" style={{ backgroundImage: `url('${selectedPlace.image}')` }} /><button className="icon-button detail-close" onClick={() => setSelectedPlace(null)} aria-label="Cerrar detalle"><X size={18} /></button><div className="detail-content"><p className="eyebrow">{selectedPlace.category} · {selectedPlace.neighborhood}</p><h2 id="detail-title">{selectedPlace.name}</h2><p>{selectedPlace.description}</p>{selectedPlace.imageIsIllustrative && <p className="notice">La fotografía es de referencia y puede no corresponder exactamente a este sitio.</p>}<div className="detail-facts"><section><h3>Historia y creación</h3><p>{selectedPlace.history}</p></section><section><h3>Fundadores o responsables</h3><p>{selectedPlace.founders}</p></section><section><h3>Actividades</h3><ul>{selectedPlace.activities.map((activity) => <li key={activity}>{activity}</li>)}</ul><small>Actividades orientativas; confirmar acceso, programación y horarios con el lugar.</small></section></div><GooglePlaceMap place={selectedPlace} /><div className="place-meta">{selectedPlace.visitMinutes && <span><Clock3 size={13} /> Visita sugerida: {selectedPlace.visitMinutes} min</span>}<span><MapPin size={13} /> {selectedPlace.latitude === undefined ? "Ubicación por verificar" : selectedPlace.neighborhood}</span></div>{selectedPlace.historySource && <p className="detail-source">Referencia registrada: {selectedPlace.historySource}</p>}<p className="notice">{selectedPlace.verified ? selectedPlace.schedule : "Ficha en proceso de verificación: validar historia, responsables, dirección, horarios y actividades antes de publicar como información oficial."}</p><button className="primary-button" style={{ marginTop: 12 }} onClick={() => toggleFavorite(selectedPlace.id)}>{favorites.includes(selectedPlace.id) ? <Check size={15} /> : <Heart size={15} />}{favorites.includes(selectedPlace.id) ? "Guardado" : "Guardar lugar"}</button></div></section></div>}
+      {selectedPlace && (
+        <div className="detail-backdrop" role="presentation" onClick={() => setSelectedPlace(null)}>
+          <section
+            className="detail-dialog"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="detail-title"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="detail-photo" style={{ backgroundImage: `url('${selectedPlace.image}')` }} />
+            <button className="icon-button detail-close" onClick={() => setSelectedPlace(null)} aria-label="Cerrar detalle">
+              <X size={18} />
+            </button>
+            <div className="detail-content">
+              <span className="eyebrow">{selectedPlace.category} · {selectedPlace.neighborhood}</span>
+              <h2 id="detail-title">{selectedPlace.name}</h2>
+              <p>{selectedPlace.description}</p>
+              {selectedPlace.imageIsIllustrative && (
+                <p className="detail-notice">La fotografía es de referencia y puede no corresponder exactamente a este sitio.</p>
+              )}
+              <div className="detail-facts">
+                <section>
+                  <h3>Historia y origen</h3>
+                  <p>{selectedPlace.history}</p>
+                </section>
+                <section>
+                  <h3>Fundadores o responsables</h3>
+                  <p>{selectedPlace.founders}</p>
+                </section>
+                <section>
+                  <h3>Actividades sugeridas</h3>
+                  <ul>{selectedPlace.activities.map((activity) => <li key={activity}>{activity}</li>)}</ul>
+                  <small>Confirmar acceso, programación y horarios directamente con el lugar antes de la visita.</small>
+                </section>
+              </div>
+              {selectedPlace.historySource && (
+                <p className="detail-source">Fuente de referencia: {selectedPlace.historySource}</p>
+              )}
+              <GooglePlaceMap place={selectedPlace} />
+              <div className="detail-meta-row">
+                {selectedPlace.visitMinutes && <span><Clock3 size={13} /> Visita sugerida: {selectedPlace.visitMinutes} min</span>}
+                <span><MapPin size={13} /> {selectedPlace.latitude === undefined ? "Ubicación por verificar" : selectedPlace.neighborhood}</span>
+              </div>
+              <p className={`detail-notice${selectedPlace.verified ? " verified" : ""}`}>
+                {selectedPlace.verified
+                  ? selectedPlace.schedule
+                  : "Ficha en proceso de verificación: validar historia, responsables, dirección, horarios y actividades antes de publicar como información oficial."}
+              </p>
+              <button className="primary-button" style={{ marginTop: 16, width: "100%" }} onClick={() => toggleFavorite(selectedPlace.id)}>
+                {favorites.includes(selectedPlace.id) ? <Check size={15} /> : <Heart size={15} />}
+                {favorites.includes(selectedPlace.id) ? "Guardado en favoritos" : "Guardar lugar"}
+              </button>
+            </div>
+          </section>
+        </div>
+      )}
       {authOpen && <AuthDialog initialMode={authMode} onClose={() => setAuthOpen(false)} />}
     </main>
   );
