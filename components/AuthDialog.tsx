@@ -6,6 +6,11 @@ import { registerDemoAccount, signInDemoAccount } from "@/lib/demoAuth";
 
 export type AuthMode = "login" | "register" | "recover";
 
+export interface AuthDialogProps {
+  initialMode?: AuthMode;
+  onClose: () => void;
+}
+
 const headings: Record<AuthMode, { eyebrow: string; title: string; description: string }> = {
   login: { eyebrow: "QUÉ BUENO VERTE", title: "Inicia sesión", description: "Entra para guardar tus lugares y preferencias." },
   register: { eyebrow: "EMPIEZA A EXPLORAR", title: "Crea tu cuenta", description: "Guarda tus intereses y arma recorridos para tu próxima visita." },
@@ -18,7 +23,7 @@ function readableAuthError(error: unknown) {
   return error.message;
 }
 
-export function AuthDialog({ initialMode = "login", onClose }: { initialMode?: AuthMode; onClose: () => void }) {
+export function AuthDialog({ initialMode = "login", onClose }: AuthDialogProps) {
   const [mode, setMode] = useState<AuthMode>(initialMode);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");

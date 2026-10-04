@@ -2,11 +2,18 @@ import { ArrowRight, Church, Landmark, Mountain, ShoppingBag, Theater, Trees, Ut
 import type { LucideIcon } from "lucide-react";
 import { places, type Place, type PlaceCategory } from "@/lib/places";
 
-type GallerySection = {
+export interface GallerySection {
   title: string;
   categories: PlaceCategory[];
   icon: LucideIcon;
-};
+}
+
+export interface ExploreGalleryProps {
+  onSelect: (place: Place) => void;
+  onExplore: (categories: PlaceCategory[]) => void;
+  sections?: GallerySection[];
+  items?: Place[];
+}
 
 export const gallerySections: GallerySection[] = [
   { title: "Iglesias y templos", categories: ["Templos"], icon: Church },
@@ -24,12 +31,7 @@ export function ExploreGallery({
   onExplore,
   sections = gallerySections,
   items = places,
-}: {
-  onSelect: (place: Place) => void;
-  onExplore: (categories: PlaceCategory[]) => void;
-  sections?: GallerySection[];
-  items?: Place[];
-}) {
+}: ExploreGalleryProps) {
   return (
     <div className="explore-galleries">
       {sections.map(({ title, categories, icon: Icon }) => {

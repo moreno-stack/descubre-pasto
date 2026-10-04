@@ -1,14 +1,12 @@
 import { ArrowRight, LogIn, Mountain, UserRoundPlus } from "lucide-react";
 
-export function WelcomeGate({
-  onSignIn,
-  onRegister,
-  onGuest,
-}: {
+export interface WelcomeGateProps {
   onSignIn: () => void;
   onRegister: () => void;
   onGuest: () => void;
-}) {
+}
+
+export function WelcomeGate({ onSignIn, onRegister, onGuest }: WelcomeGateProps) {
   return (
     <main className="welcome-gate">
       <div className="welcome-landscape" aria-hidden="true" />

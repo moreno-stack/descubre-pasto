@@ -1,18 +1,7 @@
 import { NextResponse } from "next/server";
-import { distanceKm, interests, places, type Interest, type Place } from "@/lib/places";
+import { distanceKm, interests, places, type Place } from "@/lib/places";
+import type { Intent, RecommendationRequest } from "@/lib/types";
 
-type RecommendationRequest = {
-  prompt?: string;
-  hours?: number;
-  budget?: string;
-  interests?: Interest[];
-  start?: string;
-  favorites?: string[];
-  visited?: string[];
-  startCoordinates?: { latitude: number; longitude: number };
-};
-
-type Intent = { hours: number; budget: string; interests: Interest[] };
 type RoutablePlace = Place & { latitude: number; longitude: number; visitMinutes: number };
 
 function hasRouteData(place: Place): place is RoutablePlace {

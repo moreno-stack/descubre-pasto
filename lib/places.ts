@@ -1,5 +1,11 @@
 import { imageForPlace, isIllustrativeImage } from "@/lib/placeImages";
 
+/** Par de coordenadas geográficas expresadas en grados decimales. */
+export interface Coordinates {
+  latitude: number;
+  longitude: number;
+}
+
 export type Interest = "Cultura" | "Historia" | "Gastronomía" | "Naturaleza";
 export type PlaceCategory =
   | "Templos"

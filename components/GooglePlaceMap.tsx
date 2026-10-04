@@ -1,6 +1,10 @@
 import { ExternalLink, MapPin } from "lucide-react";
 import type { Place } from "@/lib/places";
 
+export interface GooglePlaceMapProps {
+  place: Place;
+}
+
 function getPlaceQuery(place: Place) {
   if (place.latitude !== undefined && place.longitude !== undefined) {
     return `${place.latitude},${place.longitude}`;
@@ -9,7 +13,7 @@ function getPlaceQuery(place: Place) {
   return `${place.name}${location}, Pasto, Nariño, Colombia`;
 }
 
-export function GooglePlaceMap({ place }: { place: Place }) {
+export function GooglePlaceMap({ place }: GooglePlaceMapProps) {
   const query = getPlaceQuery(place);
   const encodedQuery = encodeURIComponent(query);
   const mapUrl = `https://www.google.com/maps/search/?api=1&query=${encodedQuery}`;

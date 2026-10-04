@@ -1,17 +1,14 @@
 import { Clock3, Heart, MapPin } from "lucide-react";
 import type { Place } from "@/lib/places";
 
-export function PlaceGrid({
-  items,
-  favorites,
-  onFavorite,
-  onSelect,
-}: {
+export interface PlaceGridProps {
   items: Place[];
   favorites: string[];
   onFavorite: (id: string) => void;
   onSelect: (place: Place) => void;
-}) {
+}
+
+export function PlaceGrid({ items, favorites, onFavorite, onSelect }: PlaceGridProps) {
   return (
     <div className="place-grid">
       {items.map((place) => (

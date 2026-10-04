@@ -7,6 +7,7 @@ import {
   Utensils, X,
 } from "lucide-react";
 import { interests, placeCategories, places, type Interest, type Place, type PlaceCategory } from "@/lib/places";
+import type { Recommendation, RouteStop } from "@/lib/types";
 import { ExploreGallery, gallerySections, homeGallerySections } from "@/components/ExploreGallery";
 import { PlaceGrid } from "@/components/PlaceGrid";
 import { AuthDialog, type AuthMode } from "@/components/AuthDialog";
@@ -15,8 +16,6 @@ import { WelcomeGate } from "@/components/WelcomeGate";
 import { readDemoSession, signOutDemoAccount, type DemoSession } from "@/lib/demoAuth";
 
 type View = "Inicio" | "Explorar" | "Recorrido" | "Favoritos" | "Perfil";
-type RouteStop = { id: string; name: string; category: Interest; minutes: number; distanceKm: number; reason: string; schedule: string; verified: boolean; order: number };
-type Recommendation = { intent: { hours: number; budget: string; interests: Interest[] }; route: RouteStop[]; estimatedMinutes: number; note: string };
 type ActiveUser = { email: string; displayName: string; local: boolean };
 
 const categoryIcons = { Cultura: Landmark, Historia: BookOpen, Gastronomía: Utensils, Naturaleza: Mountain };
