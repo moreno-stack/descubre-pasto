@@ -245,6 +245,8 @@ export default function Home() {
             <RouteAssistant 
               favorites={favorites}
               onRecommendationGenerated={(rec) => setRecommendation(rec)}
+              onFavoriteToggle={toggleFavorite}
+              onPlaceSelect={setSelectedPlace}
             />
           </div>
         </>}

@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { Bot, Send, Loader2, MapPin, Clock3, Sparkles, User, RefreshCw } from "lucide-react";
-import type { Interest } from "@/lib/places";
+import { Bot, Send, Loader2, MapPin, Clock3, Sparkles, User, RefreshCw, Heart, Check, Image as ImageIcon } from "lucide-react";
+import { places, type Interest, type Place } from "@/lib/places";
 import type { Recommendation } from "@/lib/types";
 
 type Message = {
@@ -21,9 +21,11 @@ type Message = {
 type RouteAssistantProps = {
   favorites: string[];
   onRecommendationGenerated?: (recommendation: Recommendation) => void;
+  onFavoriteToggle?: (id: string) => void;
+  onPlaceSelect?: (place: Place) => void;
 };
 
-export function RouteAssistant({ favorites, onRecommendationGenerated }: RouteAssistantProps) {
+export function RouteAssistant({ favorites, onRecommendationGenerated, onFavoriteToggle, onPlaceSelect }: RouteAssistantProps) {
   const [messages, setMessages] = useState<Message[]>([
     {
       id: "welcome",
@@ -309,6 +311,60 @@ export function RouteAssistant({ favorites, onRecommendationGenerated }: RouteAs
             </div>
             <div className="route-message-content">
               <p style={{ whiteSpace: "pre-line" }}>{message.content}</p>
+              
+              {/* Mostrar fichas de lugares si hay recomendación */}
+              {message.data?.recommendation && message.data.recommendation.route.length > 0 && (
+                <div className="route-places-grid">
+                  {message.data.recommendation.route.map((stop) => {
+                    const place = places.find(p => p.id === stop.id);
+                    if (!place) return null;
+                    
+                    const isFavorite = favorites.includes(place.id);
+                    
+                    return (
+                      <div key={place.id} className="route-place-card">
+                        {place.image ? (
+                          <button 
+                            className="route-place-image" 
+                            style={{ backgroundImage: `url('${place.image}')` }}
+                            onClick={() => onPlaceSelect?.(place)}
+                            aria-label={`Ver detalles de ${place.name}`}
+                          />
+                        ) : (
+                          <button
+                            className="route-place-image route-place-image--empty"
+                            onClick={() => onPlaceSelect?.(place)}
+                            aria-label={`Ver detalles de ${place.name}`}
+                          >
+                            <ImageIcon size={32} strokeWidth={1.5} />
+                          </button>
+                        )}
+                        
+                        <div className="route-place-order">{stop.order}</div>
+                        
+                        <button
+                          className={`route-place-favorite ${isFavorite ? "saved" : ""}`}
+                          onClick={() => onFavoriteToggle?.(place.id)}
+                          aria-label={isFavorite ? "Quitar de favoritos" : "Agregar a favoritos"}
+                        >
+                          {isFavorite ? <Check size={16} /> : <Heart size={16} />}
+                        </button>
+                        
+                        <div className="route-place-info">
+                          <h4>{place.name}</h4>
+                          <p className="route-place-category">{place.category}</p>
+                          <div className="route-place-meta">
+                            <span><Clock3 size={12} /> {stop.minutes} min</span>
+                            <span><MapPin size={12} /> {stop.distanceKm} km</span>
+                          </div>
+                          <p className="route-place-reason">{stop.reason}</p>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+              
               <span className="route-message-time">
                 {message.timestamp.toLocaleTimeString("es-CO", {
                   hour: "2-digit",
