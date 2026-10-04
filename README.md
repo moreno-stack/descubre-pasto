@@ -24,10 +24,15 @@ El sistema ahora utiliza la API de Groq (Llama 3.3 70B) para:
 - **Optimización de rutas**: Crea rutas turísticas más lógicas y personalizadas
 - **Análisis de preferencias**: Detecta automáticamente intereses del usuario
 
-**Configuración**: La API key se configura en `.env.local`:
-```bash
-GROQ_API_KEY=tu_api_key_aquí
-```
+**Configuración**: 
+1. Obtén tu API key en: https://console.groq.com/keys
+2. Crea un archivo `.env.local` en la raíz del proyecto
+3. Agrega: `GROQ_API_KEY=tu_api_key_aqui`
+
+**⚠️ IMPORTANTE**: 
+- Nunca compartas tu API key públicamente
+- `.env.local` ya está en `.gitignore`
+- Ver `SEGURIDAD.md` para más detalles
 
 ### 🎥 Video en la Portada
 El hero de la página principal ahora soporta video de fondo:
