@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import {
   ArrowRight, Bookmark, BookOpen, Check, Clock3, Compass, Heart, Landmark, LogIn, LogOut,
-  MapPin, Mountain, Navigation, Search, Send, Sparkles, UserRound,
+  MapPin, MessageCircle, Mountain, Navigation, Search, Send, Sparkles, UserRound,
   Utensils, X,
 } from "lucide-react";
 import { interests, placeCategories, places, type Interest, type Place, type PlaceCategory } from "@/lib/places";
@@ -13,6 +13,7 @@ import { PlaceGrid } from "@/components/PlaceGrid";
 import { AuthDialog, type AuthMode } from "@/components/AuthDialog";
 import { GooglePlaceMap } from "@/components/GooglePlaceMap";
 import { WelcomeGate } from "@/components/WelcomeGate";
+import { ChatBot } from "@/components/ChatBot";
 import { readDemoSession, signOutDemoAccount, type DemoSession } from "@/lib/demoAuth";
 
 type View = "Inicio" | "Explorar" | "Recorrido" | "Favoritos" | "Perfil";
@@ -51,6 +52,7 @@ export default function Home() {
   const [recommendation, setRecommendation] = useState<Recommendation | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [chatOpen, setChatOpen] = useState(false);
 
   useEffect(() => {
     const localSession = readDemoSession();
@@ -181,11 +183,11 @@ export default function Home() {
               muted
               loop
               playsInline
+              preload="auto"
               poster="/imagenes/portada-bienvenida.jpg"
             >
               <source src="/videos/pasto-discover.mp4" type="video/mp4" />
-              {/* Fallback a video de ejemplo si no hay video local */}
-              <source src="https://videos.pexels.com/video-files/3571264/3571264-sd_640_360_30fps.mp4" type="video/mp4" />
+              Tu navegador no soporta el elemento video.
             </video>
             <div className="hero-video-overlay" />
             <div className="hero-content">
@@ -361,6 +363,18 @@ export default function Home() {
         </div>
       )}
       {authOpen && <AuthDialog initialMode={authMode} onClose={() => setAuthOpen(false)} />}
+      {chatOpen && <ChatBot onClose={() => setChatOpen(false)} />}
+      
+      {/* Floating Action Button para abrir el chat */}
+      {!chatOpen && (
+        <button 
+          className="chat-fab" 
+          onClick={() => setChatOpen(true)}
+          aria-label="Abrir asistente virtual"
+        >
+          <MessageCircle size={28} />
+        </button>
+      )}
     </main>
   );
 }
