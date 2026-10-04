@@ -14,6 +14,7 @@ import { AuthDialog, type AuthMode } from "@/components/AuthDialog";
 import { GooglePlaceMap } from "@/components/GooglePlaceMap";
 import { WelcomeGate } from "@/components/WelcomeGate";
 import { ChatBot } from "@/components/ChatBot";
+import { RouteAssistant } from "@/components/RouteAssistant";
 import { readDemoSession, signOutDemoAccount, type DemoSession } from "@/lib/demoAuth";
 
 type View = "Inicio" | "Explorar" | "Recorrido" | "Favoritos" | "Perfil";
@@ -233,52 +234,18 @@ export default function Home() {
         </>}
 
         {view === "Recorrido" && <>
-          <div className="subpage-title"><div><p className="eyebrow">RECOMENDACIÓN PERSONALIZADA</p><h1>Arma tu recorrido</h1><p>Cuéntanos cuánto tiempo tienes y qué te interesa.</p></div></div>
-          <div className="route-layout">
-            <form className="route-form" onSubmit={(event) => { event.preventDefault(); void generateRecommendation(prompt); }}>
-              <h2>Tu plan, a tu ritmo</h2><p>La ruta se construye con los lugares del catálogo y se ajusta al tiempo que indiques.</p>
-              <div className="form-grid">
-                <div className="field"><label htmlFor="hours">Tiempo disponible</label><select id="hours" value={hours} onChange={(event) => setHours(event.target.value)}>{[1, 2, 3, 4, 5, 6, 8].map((hour) => <option key={hour} value={hour}>{hour} {hour === 1 ? "hora" : "horas"}</option>)}</select></div>
-                <div className="field"><label htmlFor="budget">Presupuesto aproximado</label><select id="budget" value={budget} onChange={(event) => setBudget(event.target.value)}><option>Bajo</option><option>Medio</option><option>Alto</option></select></div>
-                <div className="field full"><label htmlFor="start">Punto de inicio</label><select id="start" value={start} onChange={(event) => {
-                  const nextStart = event.target.value;
-                  setStart(nextStart);
-                  setLocationNotice("");
-                  if (nextStart !== "Mi ubicación") {
-                    setStartCoordinates(undefined);
-                    return;
-                  }
-                  if (!navigator.geolocation) {
-                    setLocationNotice("Este navegador no permite compartir ubicación. Puedes usar el centro histórico como inicio.");
-                    setStart("Centro histórico");
-                    return;
-                  }
-                  navigator.geolocation.getCurrentPosition(
-                    (position) => setStartCoordinates({ latitude: position.coords.latitude, longitude: position.coords.longitude }),
-                    () => {
-                      setLocationNotice("No se obtuvo tu ubicación. Puedes permitir el acceso o elegir el centro histórico.");
-                      setStart("Centro histórico");
-                    },
-                    { enableHighAccuracy: false, timeout: 8000, maximumAge: 120000 },
-                  );
-                }}><option>Centro histórico</option><option>Mi ubicación</option></select>{locationNotice && <small className="error-message">{locationNotice}</small>}</div>
-                <div className="field full"><label>Intereses</label><div className="interest-options">{interests.map((item) => <label className="interest-option" key={item}><input type="checkbox" checked={selectedInterests.includes(item)} onChange={() => setSelectedInterests((current) => current.includes(item) ? current.filter((interest) => interest !== item) : [...current, item])} />{item}</label>)}</div></div>
-                <div className="field full"><label htmlFor="route-prompt">¿Algo más que debamos tener en cuenta?</label><input id="route-prompt" value={prompt} onChange={(event) => setPrompt(event.target.value)} placeholder="Ej. Quiero probar comida típica" /></div>
-              </div>
-              <button className="primary-button route-submit" type="submit" disabled={loading}><Sparkles size={16} />{loading ? "Preparando propuesta..." : "Generar recorrido"}</button>
-              {error && <p className="error-message" role="alert">{error}</p>}
-            </form>
-            <section className="route-result" aria-live="polite">
-              <h2>{recommendation?.route.length ? "Tu propuesta" : "Tu recorrido aparecerá aquí"}</h2>
-              {!recommendation && <div className="empty-state"><Compass size={27} /><p>Al generar una propuesta, verás las paradas sugeridas y por qué fueron elegidas.</p></div>}
-              {loading && <div className="empty-state"><Sparkles size={27} /><p>Estamos organizando lugares que coincidan con tus criterios.</p></div>}
-              {recommendation && !loading && <>
-                <p>{recommendation.intent.hours} horas · {recommendation.intent.interests.join(" · ")} · Presupuesto {recommendation.intent.budget.toLowerCase()}</p>
-                {recommendation.route.length > 0 && <div className="route-summary"><span className="summary-pill"><Clock3 size={13} /> {recommendation.estimatedMinutes} min aprox.</span><span className="summary-pill"><MapPin size={13} /> {recommendation.route.length} paradas</span></div>}
-                {recommendation.route.map((stop) => <div className="route-stop" key={stop.id}><span className="stop-number">{stop.order}</span><div><strong>{stop.name}</strong><small>{stop.category} · {stop.minutes} min de visita · {stop.distanceKm} km desde el centro<br />{stop.reason}</small></div></div>)}
-                <p className="notice">{recommendation.note}</p>
-              </>}
-            </section>
+          <div className="subpage-title">
+            <div>
+              <p className="eyebrow">ASISTENTE CONVERSACIONAL</p>
+              <h1>Crea tu recorrido</h1>
+              <p>Chatea conmigo y te ayudaré a armar el itinerario perfecto.</p>
+            </div>
+          </div>
+          <div style={{ maxWidth: "900px", margin: "0 auto" }}>
+            <RouteAssistant 
+              favorites={favorites}
+              onRecommendationGenerated={(rec) => setRecommendation(rec)}
+            />
           </div>
         </>}
 
