@@ -175,6 +175,17 @@ export default function Home() {
       <div className="page">
         {view === "Inicio" && <>
           <section className="hero">
+            <video
+              className="hero-video"
+              autoPlay
+              muted
+              loop
+              playsInline
+              poster="/imagenes/Descubre Pasto_ Cultura y Naturaleza.png"
+            >
+              <source src="https://videos.pexels.com/video-files/3571264/3571264-sd_640_360_30fps.mp4" type="video/mp4" />
+            </video>
+            <div className="hero-video-overlay" />
             <div className="hero-content">
               <p className="eyebrow"><Sparkles size={14} /> TU PRÓXIMO PLAN EMPIEZA AQUÍ</p>
               <h1>Pasto se descubre paso a paso.</h1>
