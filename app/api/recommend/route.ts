@@ -44,39 +44,6 @@ function parseIntent(prompt: string, request: RecommendationRequest): Intent {
   };
 }
 
-async function extractIntentWithModel(prompt: string, fallback: Intent): Promise<Intent> {
-  const apiKey = process.env.OPENAI_API_KEY;
-  if (!apiKey) return fallback;
-
-  try {
-    const response = await fetch(process.env.OPENAI_BASE_URL ?? "https://api.openai.com/v1/chat/completions", {
-      method: "POST",
-      headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
-      body: JSON.stringify({
-        model: process.env.OPENAI_MODEL ?? "gpt-4o-mini",
-        temperature: 0,
-        response_format: { type: "json_object" },
-        messages: [
-          { role: "system", content: `Extrae únicamente criterios de viaje del texto. Devuelve JSON con hours (número), budget (Bajo|Medio|Alto), interests (lista de ${interests.join(", ")}). No inventes lugares ni datos.` },
-          { role: "user", content: prompt },
-        ],
-      }),
-      signal: AbortSignal.timeout(6500),
-    });
-    if (!response.ok) return fallback;
-    const payload = await response.json();
-    const parsed = JSON.parse(payload.choices?.[0]?.message?.content ?? "{}") as Partial<Intent>;
-    const safeInterests = parsed.interests?.filter((item): item is Interest => interests.includes(item)) ?? [];
-    return {
-      hours: Number.isFinite(parsed.hours) ? Math.max(1, Math.min(12, Number(parsed.hours))) : fallback.hours,
-      budget: ["Bajo", "Medio", "Alto"].includes(parsed.budget ?? "") ? parsed.budget! : fallback.budget,
-      interests: safeInterests.length ? safeInterests : fallback.interests,
-    };
-  } catch {
-    return fallback;
-  }
-}
-
 function buildRoute(intent: Intent, request: RecommendationRequest) {
   const maxMinutes = intent.hours * 60;
   const startPoint = request.startCoordinates ?? { latitude: 1.2136, longitude: -77.2811 };
@@ -117,8 +84,7 @@ export async function POST(request: Request) {
   try {
     const body = (await request.json()) as RecommendationRequest;
     const prompt = body.prompt?.slice(0, 500) ?? "";
-    const fallback = parseIntent(prompt, body);
-    const intent = await extractIntentWithModel(prompt, fallback);
+    const intent = parseIntent(prompt, body);
     const result = buildRoute(intent, body);
 
     return NextResponse.json({

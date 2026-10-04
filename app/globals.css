@@ -28,7 +28,7 @@ a { color: inherit; text-decoration: none; }
 
 .app-shell { min-height: 100vh; padding-bottom: 92px; }
 .welcome-gate { position: relative; isolation: isolate; display: flex; min-height: 100svh; flex-direction: column; overflow: hidden; padding: 30px clamp(22px, 7vw, 100px); background: #1d302b; color: white; }
-.welcome-landscape { position: absolute; z-index: -2; inset: 0; background: url("/imagenes/galeras.jpg") center 52% / cover no-repeat; }
+.welcome-landscape { position: absolute; z-index: -2; inset: 0; background-image: url("/imagenes/galeras.jpg"); background-position: center 52%; background-size: cover; background-repeat: no-repeat; }
 .welcome-gate::before { position: absolute; z-index: -1; inset: 0; background: linear-gradient(90deg, rgba(15,34,29,.88) 0%, rgba(18,39,33,.71) 45%, rgba(21,39,33,.13) 100%), linear-gradient(0deg, rgba(15,34,29,.48), transparent 48%); content: ""; }
 .welcome-header { display: flex; align-items: center; gap: 12px; }
 .welcome-header .brand-name { color: white; }
@@ -68,7 +68,7 @@ a { color: inherit; text-decoration: none; }
   position: relative; min-height: 400px; overflow: hidden; display: flex; align-items: center;
   padding: 56px 62px; color: white; border-radius: 5px 72px 5px 5px;
   background: linear-gradient(90deg, rgba(20, 43, 35, .93) 0%, rgba(28, 55, 43, .78) 42%, rgba(35, 49, 36, .12) 100%),
-    url("https://images.unsplash.com/photo-1470770841072-f978cf4d019e?auto=format&fit=crop&w=2000&q=90") center 48% / cover;
+    url("/imagenes/Descubre Pasto_ Cultura y Naturaleza.png") center 48% / cover;
 }
 .hero::after { content: ""; position: absolute; right: 6%; bottom: -78px; width: 220px; height: 220px; border: 1px solid rgba(255,255,255,.32); border-radius: 50%; box-shadow: 0 0 0 26px rgba(255,255,255,.07), 0 0 0 52px rgba(255,255,255,.06); }
 .hero-content { position: relative; z-index: 1; max-width: 580px; }
@@ -186,10 +186,6 @@ a { color: inherit; text-decoration: none; }
 .auth-dialog > .eyebrow { margin-bottom: 8px; color: var(--clay); }
 .auth-dialog h2 { margin: 0; font: 600 34px/1.12 "Fraunces", serif; }
 .auth-description { margin: 9px 0 21px; color: var(--muted); font-size: 12px; line-height: 1.6; }
-.google-button { display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; min-height: 46px; border: 1px solid var(--line); border-radius: 3px; background: white; color: var(--ink); font-size: 12px; font-weight: 700; }
-.google-button:hover:not(:disabled) { border-color: #9eaa9f; background: #fbfcf9; }
-.google-button:disabled { color: #81877f; cursor: not-allowed; }
-.google-mark { font: 700 18px Arial, sans-serif; color: #4285f4; }
 .auth-divider { display: flex; align-items: center; gap: 11px; margin: 17px 0; color: var(--muted); font-size: 10px; }
 .auth-divider::before, .auth-divider::after { flex: 1; height: 1px; background: var(--line); content: ""; }
 .auth-form { display: grid; gap: 13px; }
