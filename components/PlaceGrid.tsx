@@ -1,4 +1,4 @@
-import { Clock3, Heart, MapPin } from "lucide-react";
+import { Clock3, Heart, ImageOff, MapPin } from "lucide-react";
 import type { Place } from "@/lib/places";
 
 export interface PlaceGridProps {
@@ -14,15 +14,23 @@ export function PlaceGrid({ items, favorites, onFavorite, onSelect }: PlaceGridP
       {items.map((place) => (
         <article className="place-card" key={place.id}>
           <button
-            className="place-image"
-            style={{ backgroundImage: `url('${place.image}')` }}
+            className={`place-image${!place.image ? " place-image--empty" : ""}`}
+            style={place.image ? { backgroundImage: `url('${place.image}')` } : undefined}
             onClick={() => onSelect(place)}
             aria-label={`Ver ${place.name}`}
           >
+            {!place.image ? (
+              <span className="place-image-pending">
+                <ImageOff size={22} aria-hidden="true" />
+                <span>Foto pendiente</span>
+              </span>
+            ) : null}
             <span className="place-tag">
               {place.kind === "Plato típico" ? "Plato típico" : place.category}
             </span>
-            {place.imageIsIllustrative && <span className="illustrative-tag">Foto de referencia</span>}
+            {place.imageIsIllustrative && place.image && (
+              <span className="illustrative-tag">Foto de referencia</span>
+            )}
           </button>
           <button
             className={`favorite-button ${favorites.includes(place.id) ? "saved" : ""}`}

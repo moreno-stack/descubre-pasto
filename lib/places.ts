@@ -1,4 +1,4 @@
-import { imageForPlace, isIllustrativeImage } from "@/lib/placeImages";
+import { imageForPlace, hasNoImage, isIllustrativeImage } from "@/lib/placeImages";
 
 /** Par de coordenadas geográficas expresadas en grados decimales. */
 export interface Coordinates {
@@ -69,6 +69,8 @@ function suggestedActivities(category: PlaceCategory, kind: Place["kind"]) {
 }
 
 function pendingEntry(name: string, category: PlaceCategory, interest: Interest, kind: Place["kind"] = "Lugar"): Place {
+  const img = imageForPlace(name, category);
+  const illustrative = isIllustrativeImage(name);
   return {
     id: `${slugify(category)}-${slugify(name)}`,
     name,
@@ -81,9 +83,9 @@ function pendingEntry(name: string, category: PlaceCategory, interest: Interest,
     history: "La historia y la fecha de creación están pendientes de documentar con una fuente confiable.",
     founders: "No hay datos de fundadores o responsables iniciales verificados en el catálogo.",
     activities: suggestedActivities(category, kind),
-    image: imageForPlace(name, category),
-    imageAlt: isIllustrativeImage(name) ? `Foto de referencia para ${category}` : `Fotografía de ${name}`,
-    imageIsIllustrative: isIllustrativeImage(name),
+    image: img,
+    imageAlt: illustrative ? `Foto de referencia para ${name}` : (img ? `Fotografía de ${name}` : `Sin fotografía disponible para ${name}`),
+    imageIsIllustrative: illustrative,
     budget: "Por verificar",
     schedule: "Horario por verificar",
     verified: false,
@@ -129,7 +131,7 @@ export const places: Place[] = [
     founders: "Fundadores o responsables iniciales pendientes de confirmar con una fuente institucional.",
     activities: suggestedActivities("Museos", "Lugar"),
     image: imageForPlace("Museo Taminango", "Museos"),
-    imageAlt: "Foto de referencia de un espacio museístico de Pasto",
+    imageAlt: "Foto de referencia del entorno museístico de Pasto (imagen ilustrativa)",
     imageIsIllustrative: true,
     latitude: 1.2171,
     longitude: -77.2792,
@@ -337,8 +339,8 @@ export const places: Place[] = [
     founders: "Comunidad diocesana de Pasto con participación de familias del barrio San Felipe.",
     activities: ["Visitar el parque San Felipe y la iglesia.", "Recorrer el sector histórico a pie.", "Asistir a misas dominicales.", "Fotografiar el conjunto arquitectónico."],
     image: "/imagenes/parque-san-felipe.jpg",
-    imageAlt: "Iglesia y parque de San Felipe en Pasto",
-    imageIsIllustrative: false,
+    imageAlt: "Iglesia y parque de San Felipe en Pasto (foto ilustrativa del entorno)",
+    imageIsIllustrative: true,
     latitude: 1.21700,
     longitude: -77.28500,
     visitMinutes: 25,

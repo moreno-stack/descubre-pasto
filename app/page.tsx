@@ -305,7 +305,13 @@ export default function Home() {
             aria-labelledby="detail-title"
             onClick={(event) => event.stopPropagation()}
           >
-            <div className="detail-photo" style={{ backgroundImage: `url('${selectedPlace.image}')` }} />
+            {selectedPlace.image ? (
+              <div className="detail-photo" style={{ backgroundImage: `url('${selectedPlace.image}')` }} />
+            ) : (
+              <div className="detail-photo detail-photo--empty">
+                <span className="detail-photo-pending" aria-hidden="true">📷 Foto pendiente</span>
+              </div>
+            )}
             <button className="icon-button detail-close" onClick={() => setSelectedPlace(null)} aria-label="Cerrar detalle">
               <X size={18} />
             </button>
