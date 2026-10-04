@@ -31,6 +31,8 @@ export const specificPlaceImages: Record<string, string> = {
   "Centro Cultural Leopoldo López Álvarez": "/imagenes/centro-cultural-leopoldo.jpg",
   "Museo del Carnaval": "/imagenes/carnaval.jpg",
   "Centro Comercial Sebastián de Belalcázar": "/imagenes/centro-comercial-sebastian.jpg",
+  "Alcaldía de Pasto": "/imagenes/alcaldia-pasto.jpg",
+  "Puente de Chapal": "/imagenes/rio-chapal.jpg",
 };
 
 const referencePlaceImages: Record<string, string> = {
