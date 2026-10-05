@@ -1,10 +1,6 @@
 import { NextResponse } from "next/server";
-import Groq from "groq-sdk";
+import { getGroq } from "@/lib/groq";
 import { places } from "@/lib/places";
-
-const groq = new Groq({
-  apiKey: process.env.GROQ_API_KEY,
-});
 
 type ChatMessage = {
   role: "user" | "assistant" | "system";
@@ -76,9 +72,9 @@ TU COMPORTAMIENTO:
       { role: "user", content: message },
     ];
 
-    const completion = await groq.chat.completions.create({
+    const completion = await getGroq().chat.completions.create({
       messages,
-      model: "llama-3.3-70b-versatile",
+      model: "qwen/qwen3.8-27b",
       temperature: 0.7,
       max_tokens: 600,
       top_p: 0.9,

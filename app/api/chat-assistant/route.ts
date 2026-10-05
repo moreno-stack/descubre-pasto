@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import Groq from "groq-sdk";
+import { getGroq } from "@/lib/groq";
 import { places } from "@/lib/places";
-
-const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
 interface RouteData {
   hours?: number;
@@ -97,8 +95,8 @@ export async function POST(request: NextRequest) {
 
       messages.push({ role: "user", content: message });
 
-      const completion = await groq.chat.completions.create({
-        model: "llama-3.3-70b-versatile",
+      const completion = await getGroq().chat.completions.create({
+        model: "qwen/qwen3.8-27b",
         messages,
         temperature: 0.7,
         max_tokens: 1000,
