@@ -11,7 +11,7 @@ export async function GET() {
   try {
     const groq = new Groq({ apiKey });
     await groq.chat.completions.create({
-      model: "llama-3.3-70b-versatile",
+      model: "qwen/qwen3.8-27b",
       messages: [{ role: "user", content: "Responde ok" }],
       max_tokens: 5,
       temperature: 0.2,

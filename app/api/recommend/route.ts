@@ -34,7 +34,7 @@ Intereses indicados: ${request.interests?.join(", ")}`;
         { role: "system", content: systemPrompt },
         { role: "user", content: userPrompt }
       ],
-      model: "llama-3.3-70b-versatile",
+      model: "qwen/qwen3.8-27b",
       temperature: 0.3,
       max_tokens: 200,
     });
@@ -128,7 +128,7 @@ Selecciona y ordena máximo 4 lugares que se ajusten al tiempo.`;
         { role: "system", content: systemPrompt },
         { role: "user", content: userPrompt }
       ],
-      model: "llama-3.3-70b-versatile",
+      model: "qwen/qwen3.8-27b",
       temperature: 0.5,
       max_tokens: 300,
     });
