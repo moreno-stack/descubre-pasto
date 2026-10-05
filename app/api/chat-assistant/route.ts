@@ -4,12 +4,12 @@ import { places } from "@/lib/places";
 
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
-// Tipos para el contexto de conversación
 interface RouteData {
   hours?: number;
   budget?: string;
   interests?: string[];
   customNote?: string;
+  includeFavorites?: boolean;
 }
 
 interface ConversationMessage {
@@ -19,202 +19,293 @@ interface ConversationMessage {
 
 interface RequestBody {
   message: string;
-  context: {
-    currentStep: string;
-    routeData: RouteData;
+  context?: {
+    currentStep?: string;
+    routeData?: RouteData;
     favorites?: string[];
     conversationHistory?: ConversationMessage[];
+    source?: "inicio" | "explorar" | "favoritos";
   };
 }
 
-// Sistema prompt para el asistente de rutas
-const SYSTEM_PROMPT = `Eres un asistente turístico experto en Pasto, Nariño, Colombia. Tu objetivo es ayudar a crear recorridos personalizados conversando naturalmente con los usuarios.
+const SYSTEM_PROMPT = `Eres un asistente turístico experto en Pasto, Nariño, Colombia. Tu objetivo es ayudar a crear recorridos personalizados conversando de forma natural y práctica.
 
-CATÁLOGO DE LUGARES:
-Tienes acceso a 116 lugares en Pasto incluyendo: templos históricos, plazas, parques, museos, cultura, gastronomía, naturaleza y centros comerciales.
+CONTEXTO DEL CATÁLOGO:
+Tienes acceso a 116 lugares registrados en Descubre Pasto, entre ellos templos históricos, plazas, parques, museos, sitios de gastronomía, naturaleza y centros comerciales.
+
+CUÁNDO SE RECIBE CONTEXTO EL CLIENTE PUEDE ENVIAR UN BLOQUE PARECIDO A ESTO:
+<contexto>
+historial de conversación, intereses prefilled, lista de favoritos con sus ids, paso actual y nota personalizada
+</contexto>
+Cuando veas ese bloque, úsalo para avanzar el flujo sin volver a preguntar lo que ya está resuelto.
 
 FLUJO DE CONVERSACIÓN:
-1. **Tiempo disponible**: Pregunta cuántas horas tiene (1-12 horas)
-2. **Presupuesto**: Bajo, Medio o Alto
-3. **Intereses**: Cultura, Historia, Gastronomía, Naturaleza (puede elegir varios)
-4. **Personalización**: Algo específico que quiera incluir o evitar
+1. **Tiempo disponible**: pregunta cuántas horas tiene (1 a 12 horas) y acomoda tu lenguaje si dice frases como "medio día", "una tarde" o "todo el día".
+2. **Presupuesto**: Bajo, Medio o Alto.
+3. **Intereses**: Cultura, Historia, Gastronomía, Naturaleza. Puede elegir varios.
+4. **Favoritos**: si existen lugares guardados, pregunta si quiere incluirlos y, si dice que sí, confirma cuáles y cómo.
+5. **Personalización**: algo que quiera incluir, evitar o priorizar.
 
-ESTILO DE CONVERSACIÓN:
-- Sé amigable, conversacional y entusiasta
-- Usa emojis con moderación (1-2 por mensaje)
-- Haz preguntas claras con opciones
-- Adapta tus respuestas al contexto del usuario
-- Si el usuario da respuestas vagas, ayúdale con sugerencias
-- Reconoce y valida sus preferencias
+ESTILO:
+- Amigable, conversacional, entusiasta, pero directo.
+- Usa pocos emojis, entre 1 y 2 por mensaje.
+- Haz preguntas claras con opciones cuando ayude.
+- Si la respuesta es vaga, ayúdala con ejemplos positivos en español.
+- Valida preferencias y recuerda lo que ya dijo.
 
 COMPRENSIÓN FLEXIBLE:
-- Acepta respuestas en lenguaje natural (no solo palabras clave)
-- Entiende variaciones: "2-3 horas", "medio día", "toda la mañana"
-- Detecta intereses implícitos: "quiero comer rico" → Gastronomía
-- Interpreta presupuestos: "no mucho dinero" → Bajo
+- Acepta lenguaje natural, no solo palabras clave.
+- Detecta intereses implícitos y presupuestos expresados en lenguaje coloquial.
 
-ACCIONES QUE PUEDES INDICAR:
-Cuando termines de recopilar información, responde con la estructura JSON al final.
+SALIDAS DE LA API:
+Este endpoint no genera el recorrido final. Detectarás cuándo ya tienes tiempo, presupuesto, intereses y, si corresponde, favoritos. En ese momento responde de forma conversacional indicando que estás listo para generar la ruta, pero no incluyas JSON estructurado ni listas de lugares. El frontend se encargará de llamar a /api/recommend para armar el itinerario.
 
 IMPORTANTE:
-- Mantén el contexto de toda la conversación
-- Si el usuario pregunta sobre Pasto, responde con conocimiento turístico
-- Si se desvía del tema, guíalo amablemente de vuelta al recorrido
-- Cuando tengas toda la info necesaria, genera el recorrido`;
+- Mantén el contexto de la conversación.
+- Si preguntan sobre Pasto, responde con conocimiento turístico.
+- Si se desvían, guíalos amablemente de vuelta al recorrido.
+- Cuando tengas la información necesaria, indícalo con naturalidad y deja que el frontend pida la ruta.`;
 
 export async function POST(request: NextRequest) {
   try {
     const body: RequestBody = await request.json();
-    const { message, context } = body;
-    const { currentStep, routeData, favorites = [], conversationHistory = [] } = context;
+    const { message, context = {} } = body;
+    const { currentStep, routeData = {}, favorites = [], conversationHistory = [], source } = context;
 
-    // Construir el contexto para Groq
-    const contextInfo = `
-ESTADO ACTUAL:
-- Paso: ${currentStep}
-- Horas disponibles: ${routeData.hours || "no especificado"}
-- Presupuesto: ${routeData.budget || "no especificado"}
-- Intereses: ${routeData.interests?.join(", ") || "no especificado"}
-- Nota personalizada: ${routeData.customNote || "ninguna"}
-- Lugares favoritos: ${favorites.length > 0 ? favorites.join(", ") : "ninguno"}
-`;
+    if (process.env.GROQ_API_KEY) {
+      const contextForAI = [
+        "<contexto>",
+        `pasoActual=${currentStep ?? "time"}`,
+        `horas=${routeData.hours ?? "no especificado"}`,
+        `presupuesto=${routeData.budget ?? "no especificado"}`,
+        `intereses=${routeData.interests?.join(", ") ?? "no especificado"}`,
+        `notaPersonalizada=${routeData.customNote ?? "ninguna"}`,
+        `incluirFavoritos=${routeData.includeFavorites ?? "no especificado"}`,
+        `origen=${source ?? "sin origen"}`,
+        `favoritos=[${favorites.slice(0, 30).join(", ")}]`,
+        `</contexto>`,
+      ].join("\n");
 
-    // Preparar mensajes para Groq
-    const messages: any[] = [
-      {
-        role: "system",
-        content: SYSTEM_PROMPT + "\n\n" + contextInfo,
-      },
-    ];
+      const messages: { role: "system" | "user" | "assistant"; content: string }[] = [
+        { role: "system", content: SYSTEM_PROMPT },
+        { role: "system", content: contextForAI },
+      ];
 
-    // Agregar historial de conversación (últimos 6 mensajes)
-    conversationHistory.forEach((msg) => {
-      messages.push({
-        role: msg.role,
-        content: msg.content,
+      conversationHistory.forEach((msg) => {
+        messages.push({ role: msg.role, content: msg.content });
       });
-    });
 
-    // Agregar mensaje actual del usuario
-    messages.push({
-      role: "user",
-      content: message,
-    });
+      messages.push({ role: "user", content: message });
 
-    // Llamar a Groq
-    const completion = await groq.chat.completions.create({
-      model: "llama-3.3-70b-versatile",
-      messages,
-      temperature: 0.7,
-      max_tokens: 1000,
-    });
+      const completion = await groq.chat.completions.create({
+        model: "llama-3.3-70b-versatile",
+        messages,
+        temperature: 0.7,
+        max_tokens: 1000,
+      });
 
-    const aiResponse = completion.choices[0]?.message?.content || "Lo siento, no pude procesar tu mensaje.";
+      const aiResponse = completion.choices[0]?.message?.content || "No pude procesar tu mensaje.";
 
-    // Analizar la respuesta para determinar acciones
-    const action = determineAction(aiResponse, message, currentStep, routeData);
+      const action = determineAction(aiResponse, message, currentStep ?? "time", routeData);
 
-    return NextResponse.json({
-      message: aiResponse,
-      action,
-    });
+      return NextResponse.json({ message: aiResponse, action });
+    }
+
+    // Fallback cuando GROQ_API_KEY no está configurada
+    const fallback = generateFallbackResponse(message, currentStep ?? "time", routeData, favorites);
+    return NextResponse.json(fallback);
   } catch (error) {
     console.error("Error en chat-assistant:", error);
     return NextResponse.json(
-      { error: "Error al procesar tu mensaje. Por favor intenta de nuevo." },
+      { error: "No pude procesar tu mensaje. Por favor intenta de nuevo." },
       { status: 500 }
     );
   }
 }
 
-// Determinar qué acción tomar basado en la conversación
-function determineAction(aiResponse: string, userMessage: string, currentStep: string, routeData: RouteData) {
-  const lowerResponse = aiResponse.toLowerCase();
-  const lowerMessage = userMessage.toLowerCase();
+function generateFallbackResponse(message: string, currentStep: string | undefined, routeData: RouteData, favorites: string[]) {
+  const lowerMsg = message.toLowerCase();
+  const step = currentStep ?? "time";
 
-  // Detectar si se extrajo información de tiempo
-  if (currentStep === "time" || currentStep === "initial") {
-    const hoursMatch = userMessage.match(/(\d+)/);
+  const hoursMatch = step === "time" && lowerMsg.match(/(\d+)/);
+  const hours = hoursMatch ? Math.max(1, Math.min(12, parseInt(hoursMatch[1], 10))) : undefined;
+
+  let budget: string | undefined;
+  if (step === "budget") {
+    if (/bajo|econ[oó]mico|barato|poco dinero|ahorro/i.test(lowerMsg)) budget = "Bajo";
+    else if (/alto|premium|lujo|sin límite|comodidad primero/i.test(lowerMsg)) budget = "Alto";
+    else if (/medio|moderado|normal|sin presupuesto definido/i.test(lowerMsg)) budget = "Medio";
+  }
+
+  let interests: string[] | undefined;
+  if (step === "interests") {
+    const detected: string[] = [];
+    if (/cultura|arte|artesan[ií]a|museo|carnaval/i.test(lowerMsg)) detected.push("Cultura");
+    if (/historia|hist[oó]rico|patrimonio|memoria|centro histórico/i.test(lowerMsg)) detected.push("Historia");
+    if (/gastronom[aá]|comida|comer|plato|sabores|restaurante|mercado|comida típica/i.test(lowerMsg)) detected.push("Gastronomía");
+    if (/naturaleza|paisaje|verde|aire libre|laguna|montaña|parque/i.test(lowerMsg)) detected.push("Naturaleza");
+    if (detected.length) interests = detected;
+  }
+
+  let customNote: string | undefined;
+  let includeFavorites = routeData.includeFavorites ?? false;
+  if (step === "custom") {
+    if (/^(no|nada|ninguno|nada especial|no tengo preferencia)$/i.test(lowerMsg)) {
+      customNote = "";
+    } else {
+      customNote = message;
+    }
+    if (/si|claro|por favor|incluye|quiero/i.test(lowerMsg)) {
+      includeFavorites = true;
+    }
+  }
+
+  const updatedRouteData: RouteData = {
+    ...(hours !== undefined ? { hours } : {}),
+    ...(budget ? { budget } : {}),
+    ...(interests?.length ? { interests } : {}),
+    ...(customNote !== undefined ? { customNote } : {}),
+    ...(includeFavorites ? { includeFavorites: true } : {}),
+  };
+
+  const nextStep = step === "time" ? "budget"
+    : step === "budget" ? "interests"
+    : step === "interests" ? "custom"
+    : step === "custom" ? "generating"
+    : step;
+
+  const assistantMessage = buildFallbackAssistantMessage(updatedRouteData, favorites, nextStep, message);
+
+  const action =
+    nextStep === "generating" && updatedRouteData.hours && updatedRouteData.budget && updatedRouteData.interests?.length
+      ? { type: "generate_recommendation", customNote: updatedRouteData.customNote ?? "" }
+      : { type: "update_route_data", data: updatedRouteData, step: nextStep };
+
+  return { message: assistantMessage, action };
+}
+
+function buildFallbackAssistantMessage(routeData: RouteData, favorites: string[], nextStep: string, userMessage: string) {
+  const favoriteNames = favoriteNamesFromIds(favorites);
+
+  if (nextStep === "budget") {
+    if (routeData.hours) {
+      return `¡Perfecto! Tenés ${routeData.hours} horas para tu visita. ¿Cuál es tu presupuesto? Puede ser Bajo, Medio o Alto.`;
+    }
+    return `¡Genial! Para armar tu recorrido necesito saber cuántas horas tenés disponible. Por ejemplo: 2, 3, 4 o más.`;
+  }
+
+  if (nextStep === "interests") {
+    if (routeData.budget) {
+      return `Entendido, presupuesto ${routeData.budget}. Ahora cuéntame tus intereses: ¿Cultura, Historia, Gastronomía, Naturaleza? Puedes decir varios, como "cultura y gastronomía".`;
+    }
+    return `¡Bien! Ahora ayudame con tu presupuesto: Bajo, Medio o Alto.`;
+  }
+
+  if (nextStep === "custom") {
+    const parts = [];
+    if (routeData.hours) parts.push(`${routeData.hours} horas`);
+    if (routeData.budget) parts.push(routeData.budget);
+    if (routeData.interests?.length) parts.push(routeData.interests.join(" y "));
+
+    let extra = "¿Algo más que quieras incluir, evitar o priorizar? Si no, decime 'no'.";
+    if (favorites.length > 0 && !routeData.includeFavorites) {
+      extra = `También tengo tus lugares guardados: ${favoriteNames}. ¿Querés que los incluya en tu recorrido? Responde sí o no.`;
+    }
+
+    return `Perfecto, ya tengo ${(parts.length ? parts.join(", ") : "tu visita")}. ${extra}`;
+  }
+
+  if (nextStep === "generating") {
+    return "Genial, ya tengo toda la información. Estoy armando tu recorrido personalizado ahora mismo.";
+  }
+
+  if (/nuevo|otro|otra vez|empezar de nuevo|cambiar/i.test(userMessage)) {
+    return "¡Claro! Empecemos de nuevo. ¿Cuántas horas tenés disponibles para tu visita?";
+  }
+
+  return "Contame más sobre lo que buscás para armar el mejor recorrido para vos.";
+}
+
+function favoriteNamesFromIds(ids: string[]): string {
+  const names = ids
+    .map(id => places.find(p => p.id === id)?.name)
+    .filter(Boolean)
+    .slice(0, 3);
+  if (!names.length) return "ninguno";
+  if (names.length === 1) return names[0] as string;
+  if (names.length === 2) return names.join(" y ");
+  return names.slice(0, 2).join(", ") + " y otros";
+}
+
+function determineAction(aiResponse: string, userMessage: string, currentStep: string | undefined, routeData: RouteData) {
+  const lowerMsg = userMessage.toLowerCase();
+  const currentStepNorm = currentStep ?? "time";
+
+  if (currentStepNorm === "time") {
+    const hoursMatch = lowerMsg.match(/(\d+)/);
     if (hoursMatch) {
-      const hours = Math.max(1, Math.min(12, parseInt(hoursMatch[1])));
-      return {
-        type: "update_route_data",
-        data: { hours },
-        step: "budget",
-      };
+      const hours = Math.max(1, Math.min(12, parseInt(hoursMatch[1], 10)));
+      return { type: "update_route_data", data: { hours }, step: "budget" };
     }
   }
 
-  // Detectar presupuesto
-  if (currentStep === "budget") {
-    let budget = "Medio";
-    if (lowerMessage.includes("bajo") || lowerMessage.includes("económico") || lowerMessage.includes("barato") || lowerMessage.includes("poco dinero")) {
-      budget = "Bajo";
-    } else if (lowerMessage.includes("alto") || lowerMessage.includes("premium") || lowerMessage.includes("lujo") || lowerMessage.includes("sin límite")) {
-      budget = "Alto";
-    } else if (lowerMessage.includes("medio") || lowerMessage.includes("moderado") || lowerMessage.includes("normal")) {
-      budget = "Medio";
-    }
+  if (currentStepNorm === "budget") {
+    let budget: string = "Medio";
+    if (/bajo|econ[oó]mico|barato|poco dinero|ahorro/i.test(lowerMsg)) budget = "Bajo";
+    else if (/alto|premium|lujo|sin límite|comodidad primero/i.test(lowerMsg)) budget = "Alto";
+    else if (/medio|moderado|normal|sin presupuesto definido/i.test(lowerMsg)) budget = "Medio";
 
-    return {
-      type: "update_route_data",
-      data: { budget },
-      step: "interests",
-    };
+    return { type: "update_route_data", data: { budget }, step: "interests" };
   }
 
-  // Detectar intereses
-  if (currentStep === "interests") {
-    const interests: string[] = [];
-    
-    if (lowerMessage.includes("cultura") || lowerMessage.includes("arte") || lowerMessage.includes("artesanía")) {
-      interests.push("Cultura");
-    }
-    if (lowerMessage.includes("historia") || lowerMessage.includes("histórico") || lowerMessage.includes("patrimonio")) {
-      interests.push("Historia");
-    }
-    if (lowerMessage.includes("gastronomía") || lowerMessage.includes("comida") || lowerMessage.includes("comer") || lowerMessage.includes("gastronóm")) {
-      interests.push("Gastronomía");
-    }
-    if (lowerMessage.includes("naturaleza") || lowerMessage.includes("paisaje") || lowerMessage.includes("verde") || lowerMessage.includes("aire libre")) {
-      interests.push("Naturaleza");
+  if (currentStepNorm === "interests") {
+    const detected: string[] = [];
+
+    if (/cultura|arte|artesan[ií]a|museo|carnaval/i.test(lowerMsg)) detected.push("Cultura");
+    if (/historia|hist[oó]rico|patrimonio|memoria|centro histórico/i.test(lowerMsg)) detected.push("Historia");
+    if (/gastronom[aá]|comida|comer|plato|sabores|restaurante|mercado|comida típica/i.test(lowerMsg)) detected.push("Gastronomía");
+    if (/naturaleza|paisaje|verde|aire libre|laguna|montaña|parque/i.test(lowerMsg)) detected.push("Naturaleza");
+
+    if (!detected.length && /todo|variado|todo lo que encuentre/i.test(lowerMsg)) {
+      detected.push("Cultura", "Historia");
     }
 
-    // Si no detectó ninguno, usar valores comunes
-    if (interests.length === 0 && (lowerMessage.includes("todo") || lowerMessage.includes("variado"))) {
-      interests.push("Cultura", "Historia");
-    }
-
-    if (interests.length > 0) {
-      return {
-        type: "update_route_data",
-        data: { interests },
-        step: "custom",
-      };
+    if (detected.length) {
+      return { type: "update_route_data", data: { interests: detected }, step: "custom" };
     }
   }
 
-  // Detectar si está listo para generar
-  if (currentStep === "custom") {
-    const customNote = lowerMessage === "no" || lowerMessage === "nada" || lowerMessage === "ninguno" ? "" : userMessage;
-    
-    return {
-      type: "update_route_data",
-      data: { customNote },
-      step: "generating",
-    };
+  if (currentStepNorm === "custom") {
+    const customNote =
+      /^(no|nada|ninguno|nada especial|no tengo preferencia)$/i.test(lowerMsg)
+        ? ""
+        : userMessage;
+
+    if (routeData.includeFavorites === true || /si|claro|por favor|incluye|quiero/i.test(lowerMsg)) {
+      return { type: "update_route_data", data: { customNote, includeFavorites: true }, step: "generating" };
+    }
+
+    return { type: "update_route_data", data: { customNote }, step: "generating" };
   }
 
-  // Detectar comando de generación directa
-  if (lowerResponse.includes("generar") || lowerResponse.includes("crear el recorrido") || lowerResponse.includes("listo")) {
-    if (routeData.hours && routeData.budget && routeData.interests && routeData.interests.length > 0) {
-      return {
-        type: "generate_recommendation",
-        customNote: routeData.customNote,
-      };
+  if (currentStepNorm === "generating" || currentStepNorm === "done") {
+    if (/nuevo|otro|otra vez|empezar de nuevo|cambiar/i.test(lowerMsg)) {
+      return { type: "reset", step: "time" };
+    }
+
+    if (/si|dale|claro|adelante|genera|ok|create|crear/i.test(lowerMsg)) {
+      if (routeData.hours && routeData.budget && routeData.interests?.length) {
+        return { type: "generate_recommendation", customNote: routeData.customNote ?? "" };
+      }
     }
   }
 
-  // Por defecto, mantener el flujo conversacional
+  // Si el usuario pregunta directamente por un recorrido completo, pasar a generación
+  if (/recorrido|recomendacion|recomendación|caminata|ruta|itinerario/i.test(lowerMsg)) {
+    if (routeData.hours && routeData.budget && routeData.interests?.length) {
+      return { type: "generate_recommendation", customNote: routeData.customNote ?? "" };
+    }
+  }
+
   return null;
 }

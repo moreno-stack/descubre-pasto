@@ -53,6 +53,13 @@ export default function Home() {
   const [recommendation, setRecommendation] = useState<Recommendation | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [apiConnected, setApiConnected] = useState<boolean | null>(null);
+  useEffect(() => {
+    fetch("/api/health/groq")
+      .then((r) => r.json())
+      .then((d) => setApiConnected(Boolean(d?.connected)))
+      .catch(() => setApiConnected(false));
+  }, []);
   const [chatOpen, setChatOpen] = useState(false);
   const [routeContext, setRouteContext] = useState<{
     prefilledInterests?: Interest[];
@@ -145,6 +152,16 @@ export default function Home() {
       prefilledFavorites: [...favorites, placeId],
       source: "explorar"
     });
+    setView("Recorrido");
+  }
+
+  function openRouteFromExplore() {
+    setRouteContext({ source: "explorar" });
+    setView("Recorrido");
+  }
+
+  function openRouteFromFavorites() {
+    setRouteContext({ source: "favoritos" });
     setView("Recorrido");
   }
 
@@ -272,16 +289,37 @@ export default function Home() {
           </section>
 
           <section className="ai-panel" id="recomendador">
-            <div className="ai-copy"><p className="eyebrow"><Sparkles size={14} /> PLAN A TU MEDIDA</p><h2>Cuéntanos qué tienes en mente.</h2><p>La recomendación combina tus intereses y tiempo con los lugares disponibles en el catálogo. Cada parada explica por qué aparece.</p></div>
+            <div className="ai-copy">
+              <p className="eyebrow"><Sparkles size={14} /> PLAN A TU MEDIDA</p>
+              <h2>¿Cuánto tiempo tienes hoy?</h2>
+              <p>Elige tu disponibilidad y el asistente te arma un recorrido personalizado según tus intereses y favoritos.</p>
+              <div className="quick-availability">
+                {[{label: "Tengo 2 horas", hours: 2},{label: "Medio día (4h)", hours: 4},{label: "Todo el día (8h)", hours: 8}].map(({label, hours}) => (
+                  <button
+                    key={label}
+                    className="availability-chip"
+                    onClick={() => {
+                      setHours(String(hours));
+                      setRouteContext({ prefilledInterests: selectedInterests.length ? selectedInterests : undefined, source: "inicio" });
+                      setView("Recorrido");
+                    }}
+                  >
+                    <Clock3 size={13} /> {label}
+                  </button>
+                ))}
+              </div>
+            </div>
             <form className="ai-form" onSubmit={handlePromptSubmit}>
+              <p style={{ fontSize: 13, color: "var(--muted)", marginBottom: 8 }}>O describe tu plan con texto libre:</p>
               <div className="ai-input-row"><input className="ai-input" value={prompt} onChange={(event) => setPrompt(event.target.value)} placeholder="Ej. Cultura e historia, tengo 3 horas" aria-label="Describe el recorrido que buscas" /><button className="primary-button" type="submit" disabled={loading} aria-label="Generar recorrido"><Send size={16} /> Proponer ruta</button></div>
               <div className="quick-prompts">{promptIdeas.map((idea) => <button key={idea} type="button" className="quick-prompt" onClick={() => { setPrompt(idea); void generateRecommendation(idea); }}>{idea}</button>)}</div>
             </form>
+            <p className={`api-status-line ${apiConnected === null ? "" : apiConnected ? "api-status-connected" : "api-status-disconnected"}`}>
+              {apiConnected === null ? "Verificando estado de Groq..." : apiConnected ? "✓ IA de Groq conectada — el asistente usará inteligencia artificial para personalizar tu ruta." : "⚠ API de Groq no disponible — el asistente funcionará en modo básico."}
+            </p>
           </section>
-        </>}
-
-        {view === "Explorar" && <>
-          <div className="subpage-title"><div><p className="eyebrow">LUGARES Y EXPERIENCIAS</p><h1>Explora Pasto</h1><p>{filteredPlaces.length} registros · encuentra por nombre, zona o categoría.</p></div><label className="search-box"><Search size={17} /><input value={search} onChange={(event) => { setSearch(event.target.value); setVisibleCount(18); }} placeholder="Buscar lugares" /></label></div>
+        </>}          {view === "Explorar" && <>
+          <div className="subpage-title"><div><p className="eyebrow">LUGARES Y EXPERIENCIAS</p><h1>Explora Pasto</h1><p>{filteredPlaces.length} registros · encuentra por nombre, zona o categoría.</p></div><label className="search-box"><Search size={17} /><input value={search} onChange={(event) => { setSearch(event.target.value); setVisibleCount(18); }} placeholder="Buscar lugares" /></label><button className="secondary-button" style={{ marginTop: 8 }} onClick={openRouteFromExplore}>Pedir recorrido <Navigation size={15} /></button></div>
           <div className="filter-row"><button className={`filter-chip ${categoryMode === "all" ? "active" : ""}`} onClick={() => { setCategory("Todas"); setCategoryMode("all"); setSelectedCategories(null); setShowGallery(true); setVisibleCount(18); }}>Todos ({places.length})</button>{placeCategories.map((item) => <button key={item} className={`filter-chip ${categoryMode === "category" && selectedCategories?.includes(item) ? "active" : ""}`} onClick={() => { setCategory(item); setCategoryMode("category"); setSelectedCategories([item]); setShowGallery(false); setVisibleCount(18); }}>{item} ({places.filter((place) => place.category === item).length})</button>)}</div>
           {showGallery && !search ? <ExploreGallery sections={gallerySections} onSelect={setSelectedPlace} onExplore={exploreCategories} /> : <>
             <PlaceGrid items={visiblePlaces} favorites={favorites} onFavorite={toggleFavorite} onSelect={setSelectedPlace} />
@@ -295,7 +333,7 @@ export default function Home() {
             <div>
               <p className="eyebrow">ASISTENTE CONVERSACIONAL</p>
               <h1>Crea tu recorrido</h1>
-              <p>Chatea conmigo y te ayudaré a armar el itinerario perfecto.</p>
+              <p>Un asistente conversacional que te pregunta el tiempo, el presupuesto, tus intereses y si quieres incluir tus favoritos. Cuando esté listo, genera la ruta con la API de Groq y te muestra las fichas de cada parada.</p>
             </div>
           </div>
           <div style={{ maxWidth: "900px", margin: "0 auto" }}>
@@ -317,13 +355,20 @@ export default function Home() {
               <h1>Lugares guardados</h1>
               <p>Ideas para tu próxima salida por Pasto.</p>
             </div>
-            {favorites.length > 0 && (
-              <button 
-                className="primary-button" 
-                onClick={createRouteFromFavorites}
-                style={{ display: "flex", gap: "6px", alignItems: "center" }}
-              >
-                <Navigation size={15} /> Crear recorrido con favoritos
+            {favorites.length > 0 ? (
+              <>
+                <button 
+                  className="primary-button" 
+                  onClick={createRouteFromFavorites}
+                  style={{ display: "flex", gap: "6px", alignItems: "center" }}
+                >
+                  <Navigation size={15} /> Crear recorrido con favoritos
+                </button>
+                <button className="secondary-button" onClick={openRouteFromFavorites}>Pedir recorrido por chat <Navigation size={15} /></button>
+              </>
+            ) : (
+              <button className="secondary-button" onClick={() => { openRouteFromFavorites(); setView("Recorrido"); }}>
+                Empezar a armar un recorrido <Navigation size={15} />
               </button>
             )}
           </div>
@@ -342,6 +387,32 @@ export default function Home() {
       </div>
 
       <nav className="mobile-nav" aria-label="Navegación móvil">{navItems.map(({ label, icon: Icon }) => <button key={label} className={view === label ? "active" : ""} onClick={() => label === "Explorar" ? goToExplore() : setView(label)} aria-label={label}><Icon size={19} /><span>{label}</span></button>)}</nav>
+
+      {/* Botón flotante del chatbot */}
+      <button
+        className={`chat-fab ${chatOpen ? "chat-fab--open" : ""}`}
+        onClick={() => setChatOpen((o) => !o)}
+        aria-label={chatOpen ? "Cerrar asistente" : "Abrir asistente de Pasto"}
+      >
+        {chatOpen ? <X size={22} /> : <MessageCircle size={22} />}
+      </button>
+
+      {/* ChatBot modal */}
+      {chatOpen && (
+        <ChatBot
+          onClose={() => setChatOpen(false)}
+          favorites={favorites}
+          selectedInterests={selectedInterests}
+          activeView={view}
+          onPlaceSelect={setSelectedPlace}
+          onFavoriteToggle={toggleFavorite}
+          onCreateRoute={({ interests }) => {
+            if (interests?.length) setSelectedInterests(interests);
+            setRouteContext({ prefilledInterests: interests ?? selectedInterests, source: "inicio" });
+            setView("Recorrido");
+          }}
+        />
+      )}
 
       {selectedPlace && (
         <div className="detail-backdrop" role="presentation" onClick={() => setSelectedPlace(null)}>

@@ -1,108 +1,189 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
-import { Send, Bot, User, X, Loader2 } from "lucide-react";
+import { useState, useRef, useEffect, useCallback } from "react";
+import { Send, Bot, User, X, Loader2, Navigation, Wifi, WifiOff, Sparkles, Heart, Check } from "lucide-react";
+import { places, type Interest, type Place } from "@/lib/places";
+
+type MentionedPlace = {
+  id: string;
+  name: string;
+  category: string;
+  neighborhood: string;
+  image: string;
+};
 
 type Message = {
   id: string;
   role: "user" | "assistant";
   content: string;
   timestamp: Date;
+  mentionedPlaces?: MentionedPlace[];
+  suggestsRoute?: boolean;
 };
 
 type ChatBotProps = {
   onClose: () => void;
+  favorites: string[];
+  selectedInterests: Interest[];
+  activeView: string;
+  onPlaceSelect: (place: Place) => void;
+  onCreateRoute?: (params: { interests?: Interest[] }) => void;
+  onFavoriteToggle: (id: string) => void;
 };
 
-export function ChatBot({ onClose }: ChatBotProps) {
+const QUICK_SUGGESTIONS = [
+  "¿Qué puedo visitar en 3 horas?",
+  "Recomiéndame comida típica",
+  "Lugares históricos del centro",
+  "¿Qué hacer con poco presupuesto?",
+];
+
+export function ChatBot({
+  onClose,
+  favorites,
+  selectedInterests,
+  activeView,
+  onPlaceSelect,
+  onCreateRoute,
+  onFavoriteToggle,
+}: ChatBotProps) {
   const [messages, setMessages] = useState<Message[]>([
     {
       id: "welcome",
       role: "assistant",
-      content: "¡Hola! Soy tu asistente virtual de Descubre Pasto. ¿En qué puedo ayudarte hoy? Puedo recomendarte lugares, armar itinerarios o responder preguntas sobre Pasto.",
+      content:
+        selectedInterests.length > 0
+          ? `¡Hola! Veo que te interesa ${selectedInterests.join(" y ")}. 🏔️ Cuéntame qué tienes en mente y te ayudo a planificar tu visita por Pasto.`
+          : "¡Hola! Soy tu asistente de Descubre Pasto. 🏔️ ¿En qué puedo ayudarte? Puedo recomendarte lugares, armar itinerarios o responder preguntas sobre Pasto y Nariño.",
       timestamp: new Date(),
     },
   ]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
+  const [groqStatus, setGroqStatus] = useState<"checking" | "connected" | "disconnected">("checking");
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
+  // Verificar estado de Groq al montar
+  useEffect(() => {
+    fetch("/api/health/groq")
+      .then((r) => r.json())
+      .then((d) => setGroqStatus(d?.connected ? "connected" : "disconnected"))
+      .catch(() => setGroqStatus("disconnected"));
+  }, []);
 
   useEffect(() => {
-    scrollToBottom();
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
   useEffect(() => {
     inputRef.current?.focus();
   }, []);
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    if (!input.trim() || loading) return;
+  const sendMessage = useCallback(
+    async (text: string) => {
+      if (!text.trim() || loading) return;
 
-    const userMessage: Message = {
-      id: Date.now().toString(),
-      role: "user",
-      content: input,
-      timestamp: new Date(),
-    };
+      const userMessage: Message = {
+        id: Date.now().toString(),
+        role: "user",
+        content: text,
+        timestamp: new Date(),
+      };
 
-    setMessages((prev) => [...prev, userMessage]);
-    setInput("");
-    setLoading(true);
+      setMessages((prev) => [...prev, userMessage]);
+      setInput("");
+      setLoading(true);
 
-    try {
-      const response = await fetch("/api/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          message: input,
-          history: messages.slice(-10).map((m) => ({ role: m.role, content: m.content })),
-        }),
-      });
+      try {
+        const response = await fetch("/api/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            message: text,
+            history: messages.slice(-10).map((m) => ({ role: m.role, content: m.content })),
+            context: {
+              favorites,
+              interests: selectedInterests,
+              activeView,
+            },
+          }),
+        });
 
-      const data = await response.json();
+        const data = await response.json();
 
-      if (!response.ok) {
-        throw new Error(data.error || "Error al procesar el mensaje");
+        if (!response.ok) {
+          throw new Error(data.error || "Error al procesar el mensaje");
+        }
+
+        const assistantMessage: Message = {
+          id: (Date.now() + 1).toString(),
+          role: "assistant",
+          content: data.message,
+          timestamp: new Date(),
+          mentionedPlaces: data.mentionedPlaces || [],
+          suggestsRoute: data.suggestsRoute || false,
+        };
+
+        setMessages((prev) => [...prev, assistantMessage]);
+      } catch {
+        const errorMessage: Message = {
+          id: (Date.now() + 1).toString(),
+          role: "assistant",
+          content:
+            groqStatus === "disconnected"
+              ? "La API de Groq no está disponible. Verifica tu clave en .env.local y reinicia el servidor."
+              : "Lo siento, tuve un problema al procesar tu mensaje. ¿Podrías intentarlo de nuevo?",
+          timestamp: new Date(),
+        };
+        setMessages((prev) => [...prev, errorMessage]);
+      } finally {
+        setLoading(false);
       }
+    },
+    [loading, messages, favorites, selectedInterests, activeView, groqStatus]
+  );
 
-      const assistantMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        role: "assistant",
-        content: data.message,
-        timestamp: new Date(),
-      };
+  function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    void sendMessage(input);
+  }
 
-      setMessages((prev) => [...prev, assistantMessage]);
-    } catch (error) {
-      const errorMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        role: "assistant",
-        content: "Lo siento, tuve un problema al procesar tu mensaje. ¿Podrías intentarlo de nuevo?",
-        timestamp: new Date(),
-      };
-      setMessages((prev) => [...prev, errorMessage]);
-    } finally {
-      setLoading(false);
-    }
+  function handleSuggestion(suggestion: string) {
+    void sendMessage(suggestion);
+  }
+
+  // Limpiar los corchetes del mensaje para mostrar texto limpio
+  function cleanMessage(content: string) {
+    return content.replace(/\[([^\]]+)\]/g, "$1");
   }
 
   return (
     <div className="chatbot-backdrop" onClick={onClose}>
       <div className="chatbot-container" onClick={(e) => e.stopPropagation()}>
+        {/* Header */}
         <div className="chatbot-header">
           <div className="chatbot-header-content">
             <div className="chatbot-avatar">
               <Bot size={20} />
             </div>
             <div>
-              <h3>Asistente Virtual</h3>
-              <p>Descubre Pasto</p>
+              <h3>Asistente Pasto</h3>
+              <div className="chatbot-api-status">
+                {groqStatus === "checking" ? (
+                  <span className="chatbot-status-dot checking" />
+                ) : groqStatus === "connected" ? (
+                  <>
+                    <Wifi size={11} />
+                    <span className="chatbot-status-label connected">IA activa</span>
+                  </>
+                ) : (
+                  <>
+                    <WifiOff size={11} />
+                    <span className="chatbot-status-label disconnected">Sin IA</span>
+                  </>
+                )}
+              </div>
             </div>
           </div>
           <button className="icon-button" onClick={onClose} aria-label="Cerrar chat">
@@ -110,6 +191,7 @@ export function ChatBot({ onClose }: ChatBotProps) {
           </button>
         </div>
 
+        {/* Mensajes */}
         <div className="chatbot-messages">
           {messages.map((message) => (
             <div
@@ -120,7 +202,59 @@ export function ChatBot({ onClose }: ChatBotProps) {
                 {message.role === "user" ? <User size={16} /> : <Bot size={16} />}
               </div>
               <div className="message-content">
-                <p>{message.content}</p>
+                <p style={{ whiteSpace: "pre-line" }}>{cleanMessage(message.content)}</p>
+
+                {/* Fichas de lugares mencionados */}
+                {message.mentionedPlaces && message.mentionedPlaces.length > 0 && (
+                  <div className="chat-mentioned-places">
+                    {message.mentionedPlaces.map((mp) => {
+                      const fullPlace = places.find((p) => p.id === mp.id);
+                      if (!fullPlace) return null;
+                      const isFav = favorites.includes(mp.id);
+                      return (
+                        <div key={mp.id} className="chat-place-chip">
+                          {mp.image && (
+                            <div
+                              className="chat-place-chip-img"
+                              style={{ backgroundImage: `url('${mp.image}')` }}
+                            />
+                          )}
+                          <div className="chat-place-chip-info">
+                            <button
+                              className="chat-place-chip-name"
+                              onClick={() => onPlaceSelect(fullPlace)}
+                            >
+                              {mp.name}
+                            </button>
+                            <span className="chat-place-chip-cat">{mp.category}</span>
+                          </div>
+                          <button
+                            className={`chat-place-fav ${isFav ? "saved" : ""}`}
+                            onClick={() => onFavoriteToggle(mp.id)}
+                            aria-label={isFav ? "Quitar de favoritos" : "Guardar"}
+                          >
+                            {isFav ? <Check size={13} /> : <Heart size={13} />}
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+
+                {/* Botón crear recorrido si la IA lo sugiere */}
+                {message.suggestsRoute && message.role === "assistant" && onCreateRoute && (
+                  <button
+                    className="chat-route-cta"
+                    onClick={() => {
+                      onCreateRoute({ interests: selectedInterests });
+                      onClose();
+                    }}
+                  >
+                    <Navigation size={14} />
+                    Crear recorrido ahora
+                  </button>
+                )}
+
                 <span className="message-time">
                   {message.timestamp.toLocaleTimeString("es-CO", {
                     hour: "2-digit",
@@ -144,6 +278,7 @@ export function ChatBot({ onClose }: ChatBotProps) {
           <div ref={messagesEndRef} />
         </div>
 
+        {/* Input */}
         <form className="chatbot-input-form" onSubmit={handleSubmit}>
           <input
             ref={inputRef}
@@ -164,31 +299,20 @@ export function ChatBot({ onClose }: ChatBotProps) {
           </button>
         </form>
 
+        {/* Sugerencias */}
         <div className="chatbot-suggestions">
-          <button
-            type="button"
-            onClick={() => setInput("¿Qué lugares puedo visitar en 3 horas?")}
-            className="suggestion-chip"
-            disabled={loading}
-          >
-            ¿Qué visitar en 3 horas?
-          </button>
-          <button
-            type="button"
-            onClick={() => setInput("Recomiéndame comida típica de Pasto")}
-            className="suggestion-chip"
-            disabled={loading}
-          >
-            Comida típica
-          </button>
-          <button
-            type="button"
-            onClick={() => setInput("Lugares naturales cerca de Pasto")}
-            className="suggestion-chip"
-            disabled={loading}
-          >
-            Lugares naturales
-          </button>
+          {QUICK_SUGGESTIONS.map((suggestion) => (
+            <button
+              key={suggestion}
+              type="button"
+              onClick={() => handleSuggestion(suggestion)}
+              className="suggestion-chip"
+              disabled={loading}
+            >
+              <Sparkles size={11} />
+              {suggestion}
+            </button>
+          ))}
         </div>
       </div>
     </div>

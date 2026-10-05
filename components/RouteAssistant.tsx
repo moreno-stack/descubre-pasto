@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { Bot, Send, Loader2, MapPin, Clock3, Sparkles, User, RefreshCw, Heart, Check, Image as ImageIcon } from "lucide-react";
+import { Bot, Send, Loader2, MapPin, Clock3, Sparkles, User, RefreshCw, Heart, Check, Image as ImageIcon, Wifi, WifiOff } from "lucide-react";
 import { places, type Interest, type Place } from "@/lib/places";
 import type { Recommendation } from "@/lib/types";
 
@@ -32,6 +32,15 @@ type RouteAssistantProps = {
 };
 
 export function RouteAssistant({ favorites, onRecommendationGenerated, onFavoriteToggle, onPlaceSelect, routeContext, onContextCleared }: RouteAssistantProps) {
+  const [groqConnected, setGroqConnected] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    fetch("/api/health/groq")
+      .then((res) => res.json())
+      .then((data) => setGroqConnected(Boolean(data?.connected)))
+      .catch(() => setGroqConnected(false));
+  }, []);
+
   const [messages, setMessages] = useState<Message[]>([
     {
       id: "welcome",
@@ -308,15 +317,52 @@ export function RouteAssistant({ favorites, onRecommendationGenerated, onFavorit
     custom: ["Quiero probar comida típica", "Lugares fotogénicos", "Con niños", "No"],
   };
 
+  const stepLabels: Record<string, string> = {
+    time: "⏱ Tiempo",
+    budget: "💰 Presupuesto",
+    interests: "🎯 Intereses",
+    custom: "✨ Preferencias",
+    generating: "🗺 Generando",
+    done: "✅ Listo",
+  };
+  const stepOrder = ["time", "budget", "interests", "custom", "generating", "done"];
+  const currentStepIndex = stepOrder.indexOf(currentStep);
+
   return (
     <div className="route-assistant">
       <div className="route-assistant-header">
         <div className="assistant-avatar-large">
           <Bot size={24} />
         </div>
-        <div>
-          <h2>Asistente de Recorridos</h2>
-          <p>Voy a ayudarte a crear tu itinerario perfecto</p>
+        <div style={{ flex: 1 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <h2>Asistente de Recorridos</h2>
+            <div className={`route-api-status ${groqConnected === null ? "checking" : groqConnected ? "connected" : "disconnected"}`}>
+              {groqConnected === null ? (
+                <Loader2 size={11} className="spinner" />
+              ) : groqConnected ? (
+                <><Wifi size={11} /> IA activa</>
+              ) : (
+                <><WifiOff size={11} /> Modo básico</>
+              )}
+            </div>
+          </div>
+          {currentStep !== "time" && (
+            <div className="route-progress-bar">
+              {stepOrder.slice(0, 5).map((step, i) => (
+                <div
+                  key={step}
+                  className={`route-progress-step ${
+                    i < currentStepIndex ? "done" : i === currentStepIndex ? "active" : ""
+                  }`}
+                  title={stepLabels[step]}
+                />
+              ))}
+            </div>
+          )}
+          {currentStep !== "done" && currentStep !== "generating" && (
+            <p className="route-step-label">{stepLabels[currentStep]}</p>
+          )}
         </div>
         {currentStep === "done" && (
           <button className="icon-button" onClick={resetConversation} aria-label="Nuevo recorrido">
@@ -443,16 +489,31 @@ export function RouteAssistant({ favorites, onRecommendationGenerated, onFavorit
             </button>
           </form>
 
-          {currentStep !== "done" && quickSuggestions[currentStep] && (
+          {currentStep in quickSuggestions && (
             <div className="route-assistant-suggestions">
-              {quickSuggestions[currentStep].map((suggestion) => (
+              {quickSuggestions[currentStep as keyof typeof quickSuggestions].map((suggestion) => (
                 <button
                   key={suggestion}
                   type="button"
-                  onClick={() => setInput(suggestion)}
+                  onClick={() => {
+                    // Auto-enviar el chip directamente
+                    const syntheticEvent = { preventDefault: () => {} } as React.FormEvent;
+                    setInput(suggestion);
+                    // Enviar en el siguiente tick para que el estado se actualice
+                    setTimeout(() => {
+                      const userMsg = { id: Date.now().toString(), role: "user" as const, content: suggestion, timestamp: new Date() };
+                      setMessages((prev) => [...prev, userMsg]);
+                      setLoading(true);
+                      processUserInput(suggestion)
+                        .catch(console.error)
+                        .finally(() => setLoading(false));
+                      setInput("");
+                    }, 0);
+                  }}
                   className="route-suggestion-chip"
                   disabled={loading}
                 >
+                  <Sparkles size={11} />
                   {suggestion}
                 </button>
               ))}
