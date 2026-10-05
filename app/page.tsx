@@ -54,6 +54,11 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [chatOpen, setChatOpen] = useState(false);
+  const [routeContext, setRouteContext] = useState<{
+    prefilledInterests?: Interest[];
+    prefilledFavorites?: string[];
+    source?: "inicio" | "explorar" | "favoritos";
+  }>({});
 
   useEffect(() => {
     const localSession = readDemoSession();
@@ -109,6 +114,38 @@ export default function Home() {
     setVisibleCount(18);
     setSearch("");
     setView("Explorar");
+  }
+
+  function createRouteFromInterest(interest: Interest) {
+    setRouteContext({
+      prefilledInterests: [interest],
+      source: "inicio"
+    });
+    setSelectedInterests([interest]);
+    setView("Recorrido");
+  }
+
+  function createRouteFromFavorites() {
+    if (favorites.length === 0) {
+      alert("Agrega algunos lugares a favoritos primero");
+      return;
+    }
+    setRouteContext({
+      prefilledFavorites: favorites,
+      source: "favoritos"
+    });
+    setView("Recorrido");
+  }
+
+  function addToRoute(placeId: string) {
+    if (!favorites.includes(placeId)) {
+      toggleFavorite(placeId);
+    }
+    setRouteContext({
+      prefilledFavorites: [...favorites, placeId],
+      source: "explorar"
+    });
+    setView("Recorrido");
   }
 
   function exploreCategories(categories: PlaceCategory[]) {
@@ -204,7 +241,27 @@ export default function Home() {
             <div className="category-row">
               {interests.map((item) => {
                 const Icon = categoryIcons[item];
-                return <button key={item} className="category-tile" onClick={() => goToExplore(item)}><span className="category-icon"><Icon size={19} /></span><span><strong>{item}</strong><small>{categoryDescriptions[item]}</small></span></button>;
+                return (
+                  <button key={item} className="category-tile" onClick={() => goToExplore(item)}>
+                    <span className="category-icon"><Icon size={19} /></span>
+                    <span>
+                      <strong>{item}</strong>
+                      <small>{categoryDescriptions[item]}</small>
+                    </span>
+                    <div style={{ marginTop: "8px", display: "flex", gap: "6px" }}>
+                      <button 
+                        className="mini-button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          createRouteFromInterest(item);
+                        }}
+                        style={{ fontSize: "10px", padding: "4px 8px" }}
+                      >
+                        <Navigation size={12} /> Crear recorrido
+                      </button>
+                    </div>
+                  </button>
+                );
               })}
             </div>
           </section>
@@ -247,12 +304,29 @@ export default function Home() {
               onRecommendationGenerated={(rec) => setRecommendation(rec)}
               onFavoriteToggle={toggleFavorite}
               onPlaceSelect={setSelectedPlace}
+              routeContext={routeContext}
+              onContextCleared={() => setRouteContext({})}
             />
           </div>
         </>}
 
         {view === "Favoritos" && <>
-          <div className="subpage-title"><div><p className="eyebrow">TU LISTA PERSONAL</p><h1>Lugares guardados</h1><p>Ideas para tu próxima salida por Pasto.</p></div></div>
+          <div className="subpage-title">
+            <div>
+              <p className="eyebrow">TU LISTA PERSONAL</p>
+              <h1>Lugares guardados</h1>
+              <p>Ideas para tu próxima salida por Pasto.</p>
+            </div>
+            {favorites.length > 0 && (
+              <button 
+                className="primary-button" 
+                onClick={createRouteFromFavorites}
+                style={{ display: "flex", gap: "6px", alignItems: "center" }}
+              >
+                <Navigation size={15} /> Crear recorrido con favoritos
+              </button>
+            )}
+          </div>
           {filteredPlaces.length ? <><PlaceGrid items={visiblePlaces} favorites={favorites} onFavorite={toggleFavorite} onSelect={setSelectedPlace} />{filteredPlaces.length > visiblePlaces.length && <button className="text-button" style={{ margin: "22px auto", display: "flex" }} onClick={() => setVisibleCount((count) => count + 18)}>Mostrar más <ArrowRight size={15} /></button>}</> : <div className="favorite-empty"><div><Heart size={27} /><p>Aún no guardas lugares. Toca el corazón de una ficha para tenerla a mano.</p><button className="text-button" onClick={() => goToExplore()}>Explorar lugares <ArrowRight size={15} /></button></div></div>}
         </>}
 
@@ -332,18 +406,6 @@ export default function Home() {
         </div>
       )}
       {authOpen && <AuthDialog initialMode={authMode} onClose={() => setAuthOpen(false)} />}
-      {chatOpen && <ChatBot onClose={() => setChatOpen(false)} />}
-      
-      {/* Floating Action Button para abrir el chat */}
-      {!chatOpen && (
-        <button 
-          className="chat-fab" 
-          onClick={() => setChatOpen(true)}
-          aria-label="Abrir asistente virtual"
-        >
-          <MessageCircle size={28} />
-        </button>
-      )}
     </main>
   );
 }

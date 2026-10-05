@@ -23,9 +23,15 @@ type RouteAssistantProps = {
   onRecommendationGenerated?: (recommendation: Recommendation) => void;
   onFavoriteToggle?: (id: string) => void;
   onPlaceSelect?: (place: Place) => void;
+  routeContext?: {
+    prefilledInterests?: Interest[];
+    prefilledFavorites?: string[];
+    source?: "inicio" | "explorar" | "favoritos";
+  };
+  onContextCleared?: () => void;
 };
 
-export function RouteAssistant({ favorites, onRecommendationGenerated, onFavoriteToggle, onPlaceSelect }: RouteAssistantProps) {
+export function RouteAssistant({ favorites, onRecommendationGenerated, onFavoriteToggle, onPlaceSelect, routeContext, onContextCleared }: RouteAssistantProps) {
   const [messages, setMessages] = useState<Message[]>([
     {
       id: "welcome",
@@ -58,6 +64,44 @@ export function RouteAssistant({ favorites, onRecommendationGenerated, onFavorit
     inputRef.current?.focus();
   }, [currentStep]);
 
+  // Manejar contexto prefilled desde otras secciones
+  useEffect(() => {
+    if (routeContext?.prefilledInterests && routeContext.prefilledInterests.length > 0) {
+      setRouteData((prev) => ({ ...prev, interests: routeContext.prefilledInterests }));
+      
+      const contextMessage: Message = {
+        id: `context-${Date.now()}`,
+        role: "assistant",
+        content: `¡Perfecto! Veo que te interesa ${routeContext.prefilledInterests.join(" y ")}. 🎯\n\n¿Cuánto tiempo tienes disponible para tu recorrido?`,
+        timestamp: new Date(),
+      };
+      setMessages((prev) => [...prev, contextMessage]);
+      setCurrentStep("time");
+      
+      if (onContextCleared) onContextCleared();
+    }
+
+    if (routeContext?.prefilledFavorites && routeContext.prefilledFavorites.length > 0) {
+      const favoriteNames = places
+        .filter(p => routeContext.prefilledFavorites?.includes(p.id))
+        .map(p => p.name)
+        .slice(0, 3)
+        .join(", ");
+      
+      const contextMessage: Message = {
+        id: `context-${Date.now()}`,
+        role: "assistant",
+        content: `Veo que tienes ${routeContext.prefilledFavorites.length} lugares guardados (${favoriteNames}...). 💚\n\n¿Quieres incluirlos en tu recorrido? También dime cuántas horas tienes disponibles.`,
+        timestamp: new Date(),
+      };
+      setMessages((prev) => [...prev, contextMessage]);
+      setRouteData((prev) => ({ ...prev, customNote: `Incluir favoritos: ${favoriteNames}` }));
+      setCurrentStep("time");
+      
+      if (onContextCleared) onContextCleared();
+    }
+  }, [routeContext, onContextCleared]);
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!input.trim() || loading) return;
@@ -89,84 +133,65 @@ export function RouteAssistant({ favorites, onRecommendationGenerated, onFavorit
   }
 
   async function processUserInput(userInput: string) {
-    const input = userInput.toLowerCase().trim();
+    try {
+      // Enviar mensaje al asistente de IA
+      const response = await fetch("/api/chat-assistant", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          message: userInput,
+          context: {
+            currentStep,
+            routeData,
+            favorites,
+            conversationHistory: messages.slice(-6).map(m => ({
+              role: m.role,
+              content: m.content
+            }))
+          }
+        }),
+      });
 
-    if (currentStep === "time") {
-      // Extraer horas del input
-      const hoursMatch = input.match(/(\d+)/);
-      const hours = hoursMatch ? parseInt(hoursMatch[1]) : 3;
-      const validHours = Math.max(1, Math.min(12, hours));
+      const data = await response.json();
 
-      setRouteData((prev) => ({ ...prev, hours: validHours }));
-
-      const response: Message = {
-        id: Date.now().toString(),
-        role: "assistant",
-        content: `Perfecto, ${validHours} ${validHours === 1 ? "hora" : "horas"} es un buen tiempo. 💰\n\n¿Qué presupuesto tienes en mente?\n\n• **Bajo** - Opciones económicas\n• **Medio** - Balance calidad-precio\n• **Alto** - Experiencias premium\n\nEscribe "bajo", "medio" o "alto".`,
-        timestamp: new Date(),
-      };
-
-      setMessages((prev) => [...prev, response]);
-      setCurrentStep("budget");
-    } else if (currentStep === "budget") {
-      let budget = "Medio";
-      if (input.includes("bajo") || input.includes("economico") || input.includes("barato")) {
-        budget = "Bajo";
-      } else if (input.includes("alto") || input.includes("premium") || input.includes("lujo")) {
-        budget = "Alto";
+      if (!response.ok) {
+        throw new Error(data.error || "Error al procesar mensaje");
       }
 
-      setRouteData((prev) => ({ ...prev, budget }));
-
-      const response: Message = {
+      // Procesar respuesta de la IA
+      const assistantMessage: Message = {
         id: Date.now().toString(),
         role: "assistant",
-        content: `Entendido, presupuesto ${budget.toLowerCase()}. 🎯\n\n¿Qué tipo de experiencias te interesan?\n\n• **Cultura** - Arte, fiestas y saberes\n• **Historia** - Memoria de la ciudad\n• **Gastronomía** - Sabores de Nariño\n• **Naturaleza** - Paisajes cercanos\n\nPuedes escribir una o varias separadas por comas (ej: "cultura y gastronomía").`,
+        content: data.message,
         timestamp: new Date(),
       };
 
-      setMessages((prev) => [...prev, response]);
-      setCurrentStep("interests");
-    } else if (currentStep === "interests") {
-      const selectedInterests: Interest[] = [];
-      
-      if (input.includes("cultura")) selectedInterests.push("Cultura");
-      if (input.includes("historia")) selectedInterests.push("Historia");
-      if (input.includes("gastronomia") || input.includes("comida") || input.includes("gastronom")) selectedInterests.push("Gastronomía");
-      if (input.includes("naturaleza")) selectedInterests.push("Naturaleza");
+      setMessages((prev) => [...prev, assistantMessage]);
 
-      // Si no detectó ninguno, usar los más comunes
-      if (selectedInterests.length === 0) {
-        selectedInterests.push("Cultura", "Historia");
+      // Actualizar estado según la respuesta de la IA
+      if (data.action) {
+        switch (data.action.type) {
+          case "update_route_data":
+            setRouteData((prev) => ({ ...prev, ...data.action.data }));
+            break;
+          case "change_step":
+            setCurrentStep(data.action.step);
+            break;
+          case "generate_recommendation":
+            setCurrentStep("generating");
+            await generateRecommendation(data.action.customNote || "");
+            break;
+        }
       }
-
-      setRouteData((prev) => ({ ...prev, interests: selectedInterests }));
-
-      const response: Message = {
+    } catch (error) {
+      console.error("Error processing input:", error);
+      const errorMessage: Message = {
         id: Date.now().toString(),
         role: "assistant",
-        content: `Excelente elección: ${selectedInterests.join(", ")}. ✨\n\n¿Hay algo específico que quieras incluir o evitar en tu recorrido?\n\n(Por ejemplo: "quiero probar comida típica" o simplemente escribe "no" para continuar)`,
+        content: "Disculpa, tuve un problema. ¿Podrías reformular tu mensaje?",
         timestamp: new Date(),
       };
-
-      setMessages((prev) => [...prev, response]);
-      setCurrentStep("custom");
-    } else if (currentStep === "custom") {
-      const customNote = input.toLowerCase() === "no" || input.toLowerCase() === "nada" ? "" : input;
-      setRouteData((prev) => ({ ...prev, customNote }));
-
-      const response: Message = {
-        id: Date.now().toString(),
-        role: "assistant",
-        content: `Perfecto! Déjame crear tu recorrido personalizado... 🗺️`,
-        timestamp: new Date(),
-      };
-
-      setMessages((prev) => [...prev, response]);
-      setCurrentStep("generating");
-
-      // Generar recomendación
-      await generateRecommendation(customNote);
+      setMessages((prev) => [...prev, errorMessage]);
     }
   }
 
