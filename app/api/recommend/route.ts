@@ -1,11 +1,7 @@
 import { NextResponse } from "next/server";
 import { distanceKm, interests, places, type Place } from "@/lib/places";
 import type { Intent, RecommendationRequest } from "@/lib/types";
-import Groq from "groq-sdk";
-
-const groq = new Groq({
-  apiKey: process.env.GROQ_API_KEY,
-});
+import { getGroq } from "@/lib/groq";
 
 type RoutablePlace = Place & { latitude: number; longitude: number; visitMinutes: number };
 
@@ -29,7 +25,7 @@ Tiempo indicado por usuario: ${request.hours} horas
 Presupuesto indicado: ${request.budget}
 Intereses indicados: ${request.interests?.join(", ")}`;
 
-    const completion = await groq.chat.completions.create({
+    const completion = await getGroq().chat.completions.create({
       messages: [
         { role: "system", content: systemPrompt },
         { role: "user", content: userPrompt }
@@ -123,7 +119,7 @@ Responde SOLO con un array JSON de IDs en el orden sugerido: ["id1", "id2", "id3
 Lugares disponibles: ${JSON.stringify(placesInfo, null, 2)}
 Selecciona y ordena máximo 4 lugares que se ajusten al tiempo.`;
 
-    const completion = await groq.chat.completions.create({
+    const completion = await getGroq().chat.completions.create({
       messages: [
         { role: "system", content: systemPrompt },
         { role: "user", content: userPrompt }
