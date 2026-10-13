@@ -1,4 +1,9 @@
-import { ArrowRight, LogIn, Mountain, UserRoundPlus } from "lucide-react";
+"use client";
+
+import { motion } from "motion/react";
+import { LogIn, UserRoundPlus } from "lucide-react";
+import { BarnizMark } from "@/components/app/BarnizMark";
+import { tap } from "@/lib/haptics";
 
 export interface WelcomeGateProps {
   onSignIn: () => void;
@@ -6,25 +11,33 @@ export interface WelcomeGateProps {
   onGuest: () => void;
 }
 
+const rise = (delay: number) => ({
+  initial: { opacity: 0, y: 30 },
+  animate: { opacity: 1, y: 0 },
+  transition: { delay, type: "spring" as const, stiffness: 200, damping: 24 },
+});
+
 export function WelcomeGate({ onSignIn, onRegister, onGuest }: WelcomeGateProps) {
   return (
-    <main className="welcome-gate">
-      <div className="welcome-landscape" aria-hidden="true" />
-      <header className="welcome-header">
-        <span className="brand-mark"><Mountain size={21} /></span>
-        <span className="brand-name">DESCUBRE <span>PASTO</span></span>
-      </header>
-      <section className="welcome-content">
-        <p className="eyebrow">CULTURA · HISTORIA · SABORES</p>
-        <h1>Tu próxima historia empieza en Pasto.</h1>
-        <p className="welcome-copy">Entra para guardar tus lugares y crear recorridos a tu manera.</p>
-        <div className="welcome-actions">
-          <button className="primary-button welcome-primary" onClick={onSignIn}><LogIn size={17} /> Iniciar sesión</button>
-          <button className="welcome-register" onClick={onRegister}><UserRoundPlus size={17} /> Crear cuenta</button>
-        </div>
-        <button className="welcome-guest" onClick={onGuest}>Explorar como visitante <ArrowRight size={15} /></button>
+    <main className="welcome">
+      <div className="welcome-photo" aria-hidden="true" />
+      <div className="welcome-fade" aria-hidden="true" />
+      <motion.header className="welcome-brand" {...rise(0.05)}>
+        <BarnizMark size={34} /> Descubre Pasto
+      </motion.header>
+      <section className="welcome-copy">
+        <motion.h1 {...rise(0.15)}>Tu próxima historia empieza en Pasto.</motion.h1>
+        <motion.p {...rise(0.25)}>Guarda lugares, pregunta lo que quieras y arma recorridos a tu medida.</motion.p>
+        <motion.div className="welcome-actions" {...rise(0.35)}>
+          <motion.button className="btn btn-oro btn-lg btn-block" whileTap={{ scale: 0.96 }} onClick={() => { tap(); onSignIn(); }}>
+            <LogIn size={18} /> Iniciar sesión
+          </motion.button>
+          <motion.button className="btn btn-glass btn-lg btn-block" whileTap={{ scale: 0.96 }} onClick={() => { tap(); onRegister(); }}>
+            <UserRoundPlus size={18} /> Crear cuenta
+          </motion.button>
+          <button className="link welcome-guest" onClick={() => { tap(); onGuest(); }}>Entrar como visitante</button>
+        </motion.div>
       </section>
-      <p className="welcome-location">Pasto, Nariño · Colombia</p>
     </main>
   );
 }

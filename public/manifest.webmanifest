@@ -1,10 +1,11 @@
 {
-  "name": "Descubre Pasto IA",
+  "name": "Descubre Pasto",
   "short_name": "Descubre Pasto",
-  "description": "Explora cultura, historia y sabores de Pasto.",
+  "description": "Lugares, historia y sabores de Pasto con recorridos a tu medida.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#f5f4ed",
-  "theme_color": "#f5f4ed",
+  "orientation": "portrait",
+  "background_color": "#16121f",
+  "theme_color": "#16121f",
   "lang": "es-CO"
 }

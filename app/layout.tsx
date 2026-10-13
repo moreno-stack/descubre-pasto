@@ -1,18 +1,24 @@
 import type { Metadata, Viewport } from "next";
+import "@fontsource-variable/bricolage-grotesque";
+import "@fontsource-variable/instrument-sans";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Descubre Pasto IA | Explora a tu manera",
-  description:
-    "Encuentra cultura, historia y sabores de Pasto. Crea recorridos a tu medida con recomendaciones explicables.",
-  applicationName: "Descubre Pasto IA",
+  title: "Descubre Pasto",
+  description: "Lugares, historia y sabores de Pasto con recorridos a tu medida.",
+  applicationName: "Descubre Pasto",
   manifest: "/manifest.webmanifest",
+  icons: { icon: "/icon.svg", apple: "/icon.svg" },
+  appleWebApp: { capable: true, statusBarStyle: "black-translucent", title: "Descubre Pasto" },
 };
 
 export const viewport: Viewport = {
-  themeColor: "#f5f4ed",
+  themeColor: "#16121f",
   width: "device-width",
   initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  viewportFit: "cover",
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
