@@ -1,13 +1,13 @@
 "use client";
 
-import { useRef } from "react";
-import { motion, useScroll, useTransform } from "motion/react";
-import { ArrowRight, Clock3, Sun, Sunrise } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { AnimatePresence, motion } from "motion/react";
+import { Clock3, MapPin, Navigation, Sparkles, Sun, Sunrise } from "lucide-react";
 import { interests, type Interest, type Place, type PlaceCategory } from "@/lib/places";
-import { highlights, interestStyle, placesFor, sections } from "@/lib/sections";
+import { highlights, interestStyle, placesFor } from "@/lib/sections";
 import { tap } from "@/lib/haptics";
 import { BarnizMark } from "@/components/app/BarnizMark";
-import { RailCard } from "@/components/app/PlaceCard";
+import { OrbitCarousel } from "@/components/app/OrbitCarousel";
 
 type Props = {
   displayName: string;
@@ -18,8 +18,24 @@ type Props = {
   onFavorite: (id: string) => void;
   onExplore: (opts: { interest?: Interest; categories?: PlaceCategory[] }) => void;
   onPlan: (opts: { interest?: Interest; hours?: number }) => void;
+  onRoutePlace: (p: Place) => void;
   onProfile: () => void;
+  onSaved: () => void;
 };
+
+const withPhoto = (list: Place[]) => {
+  const w = list.filter((p) => p.image);
+  return w.length >= 3 ? w : list;
+};
+
+const ORBITS: { label: string; items: () => Place[] }[] = [
+  { label: "Imperdibles", items: () => highlights },
+  { label: "Templos", items: () => withPhoto(placesFor(["Templos"], 9)) },
+  { label: "Plazas", items: () => withPhoto(placesFor(["Plazas"], 9)) },
+  { label: "Cultura", items: () => withPhoto(placesFor(["Museos", "Cultura"], 9)) },
+  { label: "Naturaleza", items: () => withPhoto(placesFor(["Naturaleza", "Parques"], 9)) },
+  { label: "Sabores", items: () => withPhoto(placesFor(["Gastronomía"], 9)) },
+];
 
 const TIME_OPTIONS = [
   { label: "2 horas", hours: 2, icon: Clock3 },
@@ -27,111 +43,104 @@ const TIME_OPTIONS = [
   { label: "Todo el día", hours: 8, icon: Sun },
 ];
 
-export function HomeScreen({ displayName, initials, favorites, apiConnected, onOpenPlace, onFavorite, onExplore, onPlan, onProfile }: Props) {
-  const scrollRef = useRef<HTMLDivElement>(null);
-  const { scrollY } = useScroll({ container: scrollRef });
-  const photoY = useTransform(scrollY, [0, 420], [0, 140]);
-  const photoScale = useTransform(scrollY, [-200, 0], [1.35, 1]);
-  const copyOpacity = useTransform(scrollY, [0, 260], [1, 0]);
-  const copyY = useTransform(scrollY, [0, 260], [0, -40]);
-  const barBg = useTransform(scrollY, [240, 320], ["rgba(22,18,31,0)", "rgba(22,18,31,0.92)"]);
+function momentOfDay() {
+  const h = new Date().getHours();
+  return h < 12 ? "Pasto de mañana" : h < 19 ? "Pasto de tarde" : "Pasto de noche";
+}
+
+export function HomeScreen({ displayName, initials, favorites, apiConnected, onOpenPlace, onFavorite, onExplore, onPlan, onRoutePlace, onProfile }: Props) {
+  const [moment, setMoment] = useState("Pasto hoy");
+  const [orbit, setOrbit] = useState(0);
+  const [current, setCurrent] = useState<Place | null>(null);
+  useEffect(() => setMoment(momentOfDay()), []);
+
+  const items = useMemo(() => ORBITS[orbit].items(), [orbit]);
+  const first = displayName.split(" ")[0];
 
   return (
-    <div className="screen-scroll" ref={scrollRef}>
-      <motion.header className="home-bar" style={{ backgroundColor: barBg }}>
-        <span className="home-brand"><BarnizMark size={30} /> Descubre Pasto</span>
-        <motion.button className="avatar" whileTap={{ scale: 0.9 }} onClick={() => { tap(); onProfile(); }} aria-label={`Abrir perfil de ${displayName}`}>
+    <div className="screen-scroll">
+      <header className="home-bar">
+        <span className="home-brand"><BarnizMark size={28} /> Descubre Pasto</span>
+        <motion.button className="avatar orbit-avatar" whileTap={{ scale: 0.9 }} onClick={() => { tap(); onProfile(); }} aria-label={`Abrir perfil de ${displayName}`}>
           {initials}
         </motion.button>
-      </motion.header>
+      </header>
 
-      <section className="hero">
-        <motion.div className="hero-photo" style={{ y: photoY, scale: photoScale }} />
-        <div className="hero-fade" />
-        <motion.div className="hero-copy" style={{ opacity: copyOpacity, y: copyY }}>
-          <p className="hero-hello">Hola, {displayName.split(" ")[0]}</p>
-          <h1>Pasto,<br />a tu ritmo.</h1>
-          <p className="hero-lead">Templos, carnaval, laguna y volcán. Dinos cuánto tiempo tienes y armamos la ruta.</p>
-          <motion.button className="btn btn-oro btn-lg" whileTap={{ scale: 0.95 }} onClick={() => { tap("medium"); onPlan({}); }}>
-            Armar mi recorrido <ArrowRight size={18} />
-          </motion.button>
-        </motion.div>
+      <section className="orbit-hero">
+        <p className="orbit-kicker">{moment} · desliza para girar</p>
+        <h1 className="orbit-title">¿Qué vives hoy,<br />{first}?</h1>
+        <div className="chips orbit-chips" role="tablist" aria-label="Qué lugares orbitan">
+          {ORBITS.map((o, i) => (
+            <motion.button
+              key={o.label}
+              role="tab"
+              aria-selected={i === orbit}
+              className={`chip ${i === orbit ? "is-active" : ""}`}
+              whileTap={{ scale: 0.92 }}
+              onClick={() => { tap(); setOrbit(i); }}
+            >
+              {o.label}
+            </motion.button>
+          ))}
+        </div>
       </section>
 
-      <div className="home-body">
-        <section className="block">
-          <h2 className="block-title">¿Qué te mueve hoy?</h2>
-          <div className="interest-grid">
-            {interests.map((it, i) => {
-              const { color, icon: Icon, hint } = interestStyle[it];
-              return (
-                <motion.button
-                  key={it}
-                  className="interest-tile"
-                  style={{ ["--tone" as string]: color }}
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  whileInView={{ opacity: 1, scale: 1 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: i * 0.06, type: "spring", stiffness: 300, damping: 22 }}
-                  whileTap={{ scale: 0.94 }}
-                  onClick={() => { tap(); onExplore({ interest: it }); }}
-                >
-                  <span className="interest-icon"><Icon size={20} /></span>
-                  <strong>{it}</strong>
-                  <small>{hint}</small>
-                </motion.button>
-              );
-            })}
-          </div>
-        </section>
+      <OrbitCarousel items={items} favorites={favorites} onOpen={(p) => onOpenPlace(p)} onFavorite={onFavorite} onActiveChange={setCurrent} />
 
-        <section className="block">
-          <div className="block-head">
-            <h2 className="block-title">Imperdibles</h2>
-            <button className="link" onClick={() => onExplore({})}>Ver todo</button>
-          </div>
-          <div className="rail rail-big">
-            {highlights.map((p) => (
-              <RailCard key={p.id} ctx="top" place={p} saved={favorites.includes(p.id)} onOpen={(k) => onOpenPlace(p, k)} onFavorite={() => onFavorite(p.id)} />
-            ))}
-          </div>
-        </section>
-
-        <section className="block time-block">
-          <h2 className="block-title">¿Cuánto tiempo tienes?</h2>
-          <p className="block-sub">
-            {apiConnected === false ? "El asistente funciona en modo básico ahora mismo." : "El asistente arma la ruta con tus intereses y guardados."}
-          </p>
-          <div className="time-row">
-            {TIME_OPTIONS.map(({ label, hours, icon: Icon }) => (
-              <motion.button key={label} className="time-tile" whileTap={{ scale: 0.93 }} onClick={() => { tap("medium"); onPlan({ hours }); }}>
-                <Icon size={22} />
-                <span>{label}</span>
-              </motion.button>
-            ))}
-          </div>
-        </section>
-
-        {sections.slice(0, 6).map((s) => {
-          const list = placesFor(s.categories);
-          if (!list.length) return null;
-          const Icon = s.icon;
-          return (
-            <section className="block" key={s.title}>
-              <div className="block-head">
-                <h2 className="block-title"><Icon size={18} aria-hidden="true" /> {s.title}</h2>
-                <button className="link" onClick={() => onExplore({ categories: s.categories })}>Ver más</button>
-              </div>
-              <div className="rail">
-                {list.map((p) => (
-                  <RailCard key={p.id} ctx={s.title} place={p} saved={favorites.includes(p.id)} onOpen={(k) => onOpenPlace(p, k)} onFavorite={() => onFavorite(p.id)} />
-                ))}
-              </div>
-            </section>
-          );
-        })}
-        <p className="home-foot">Pasto, Nariño · Colombia</p>
+      <div className="orbit-info" aria-live="polite">
+        <AnimatePresence mode="wait">
+          {current && (
+            <motion.div key={current.id} initial={{ opacity: 0, y: 10, filter: "blur(4px)" }} animate={{ opacity: 1, y: 0, filter: "blur(0px)" }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.22 }}>
+              <span className="orbit-kicker">{current.category}{current.neighborhood !== "Sector por confirmar" ? ` · ${current.neighborhood}` : ""}</span>
+              <h2>{current.name}</h2>
+              <p className="orbit-meta">
+                {current.visitMinutes ? <span><Clock3 size={14} /> {current.visitMinutes} min</span> : null}
+                <span><MapPin size={14} /> Pasto</span>
+              </p>
+            </motion.div>
+          )}
+        </AnimatePresence>
+        <div className="orbit-dots" aria-hidden="true">
+          {items.map((p) => <motion.i key={p.id} animate={{ width: current?.id === p.id ? 22 : 6, opacity: current?.id === p.id ? 1 : 0.4 }} />)}
+        </div>
       </div>
+
+      <div className="orbit-cta">
+        <motion.button className="btn btn-neon btn-lg" whileTap={{ scale: 0.95 }} onClick={() => { if (current) { tap("medium"); onRoutePlace(current); } }}>
+          <Sparkles size={18} /> Agregar a mi ruta
+        </motion.button>
+        <motion.button className="btn btn-ghost orbit-open" whileTap={{ scale: 0.9 }} onClick={() => current && onOpenPlace(current)} aria-label="Ver ficha del lugar">
+          <Navigation size={18} />
+        </motion.button>
+      </div>
+
+      <section className="block">
+        <h2 className="block-title">¿Cuánto tiempo tienes?</h2>
+        <p className="block-sub">{apiConnected === false ? "El asistente funciona en modo básico ahora mismo." : "La IA arma tu órbita del día con tus intereses."}</p>
+        <div className="time-row">
+          {TIME_OPTIONS.map(({ label, hours, icon: Icon }) => (
+            <motion.button key={label} className="time-tile" whileTap={{ scale: 0.93 }} onClick={() => { tap("medium"); onPlan({ hours }); }}>
+              <Icon size={22} />
+              <span>{label}</span>
+            </motion.button>
+          ))}
+        </div>
+      </section>
+
+      <section className="block">
+        <h2 className="block-title">¿Qué te mueve?</h2>
+        <div className="interest-chips">
+          {interests.map((it) => {
+            const { color, icon: Icon } = interestStyle[it];
+            return (
+              <motion.button key={it} className="interest-chip" style={{ ["--tone" as string]: color }} whileTap={{ scale: 0.92 }} onClick={() => { tap(); onExplore({ interest: it }); }}>
+                <Icon size={16} /> {it}
+              </motion.button>
+            );
+          })}
+        </div>
+      </section>
+      <p className="home-foot">Pasto, Nariño · Colombia</p>
     </div>
   );
 }

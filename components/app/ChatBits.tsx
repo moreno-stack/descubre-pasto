@@ -2,6 +2,9 @@
 
 import { Fragment } from "react";
 import { motion } from "motion/react";
+import { Navigation } from "lucide-react";
+import { tap } from "@/lib/haptics";
+import type { Directions } from "@/lib/directions";
 
 /** Muestra **negritas** y quita los [corchetes] que usa la IA para marcar lugares. */
 export function RichText({ text }: { text: string }) {
@@ -32,3 +35,30 @@ export const bubbleMotion = (fromUser: boolean) => ({
   transition: { type: "spring" as const, stiffness: 380, damping: 26 },
   style: { originX: fromUser ? 1 : 0, originY: 1 },
 });
+
+/** Tarjeta con la ruta en Google Maps (un lugar o un recorrido). */
+export function DirectionsCard({ directions }: { directions: Directions }) {
+  const many = directions.places.length > 1;
+  const label: Record<string, string> = { walking: "A pie", driving: "En carro", transit: "En bus" };
+  return (
+    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
+      <a className="route-card" href={directions.mapsUrl} target="_blank" rel="noreferrer" onClick={() => tap()}>
+        <span className="route-card-icon"><Navigation size={18} /></span>
+        <span className="route-card-copy">
+          <strong>{many ? "Abrir recorrido en Google Maps" : "Cómo llegar en Google Maps"}</strong>
+          <small>
+            {many ? `${directions.places.length} paradas en orden` : directions.places[0]?.name}
+            {directions.distanceKm !== undefined ? ` · ~${directions.distanceKm} km desde el centro` : ""}
+          </small>
+        </span>
+      </a>
+      <div className="route-card-modes">
+        {(["walking", "driving", "transit"] as const).map((m) => (
+          <a key={m} href={directions.modes[m]} target="_blank" rel="noreferrer" className={directions.mode === m ? "is-on" : ""} onClick={() => tap("light")}>
+            {label[m]}
+          </a>
+        ))}
+      </div>
+    </motion.div>
+  );
+}

@@ -2,11 +2,18 @@
 
 import { useMemo, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
-import { Search, X } from "lucide-react";
+import { Compass, Search, X } from "lucide-react";
 import { places, type Interest, type Place, type PlaceCategory } from "@/lib/places";
 import { sections } from "@/lib/sections";
 import { tap } from "@/lib/haptics";
 import { GridCard } from "@/components/app/PlaceCard";
+import { PlanetDial, type Planet } from "@/components/app/PlanetDial";
+
+const SHORT: Record<string, string> = {
+  "Iglesias y templos": "Templos", "Plazas": "Plazas", "Parques": "Parques", "Museos y cultura": "Cultura",
+  "Naturaleza": "Naturaleza", "Sabores nariñenses": "Sabores", "Centros comerciales": "Comercio", "Puentes": "Puentes",
+};
+const PLANETS: Planet[] = [{ key: "todo", label: "Todo", icon: Compass }, ...sections.map((s) => ({ key: s.title, label: SHORT[s.title] ?? s.title, icon: s.icon }))];
 
 export type ExploreFilter = { interest?: Interest; categories?: PlaceCategory[] };
 
@@ -34,6 +41,8 @@ export function ExploreScreen({ filter, onFilter, favorites, onOpenPlace, onFavo
   }, [filter, search]);
 
   const key = filter.categories?.join() ?? filter.interest ?? "todo";
+  const sectionIndex = sections.findIndex((s) => s.categories.join() === filter.categories?.join());
+  const selectedPlanet = sectionIndex >= 0 ? sectionIndex + 1 : 0;
   const activeTitle = filter.interest ?? sections.find((s) => s.categories.join() === filter.categories?.join())?.title;
 
   return (
@@ -56,16 +65,16 @@ export function ExploreScreen({ filter, onFilter, favorites, onOpenPlace, onFavo
             )}
           </AnimatePresence>
         </label>
-        <div className="chips" role="tablist" aria-label="Categorías">
-          <Chip active={!filter.categories && !filter.interest} onClick={() => { onFilter({}); setVisible(PAGE); }}>Todo</Chip>
-          {filter.interest && <Chip active onClick={() => {}}>{filter.interest}</Chip>}
-          {sections.map((s) => (
-            <Chip key={s.title} active={s.title === activeTitle} onClick={() => { onFilter({ categories: s.categories }); setVisible(PAGE); }}>
-              {s.title}
-            </Chip>
-          ))}
-        </div>
+        {filter.interest && (
+          <button className="filter-pill" onClick={() => onFilter({})}>Filtrando por {filter.interest} <X size={14} /></button>
+        )}
+        <PlanetDial
+          planets={PLANETS}
+          selected={selectedPlanet}
+          onSelect={(i) => { onFilter(i === 0 ? {} : { categories: sections[i - 1].categories }); setVisible(PAGE); }}
+        />
       </header>
+
 
       <p className="explore-count">
         {filtered.length === 1 ? "1 lugar" : `${filtered.length} lugares`}{activeTitle ? ` en ${activeTitle.toLocaleLowerCase("es")}` : ""}
@@ -91,14 +100,5 @@ export function ExploreScreen({ filter, onFilter, favorites, onOpenPlace, onFavo
         </div>
       )}
     </div>
-  );
-}
-
-function Chip({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
-  return (
-    <motion.button className={`chip ${active ? "is-active" : ""}`} role="tab" aria-selected={active} whileTap={{ scale: 0.92 }} onClick={() => { tap(); onClick(); }}>
-      {active && <motion.span layoutId="chip-blob" className="chip-blob" transition={{ type: "spring", stiffness: 500, damping: 35 }} />}
-      <span>{children}</span>
-    </motion.button>
   );
 }

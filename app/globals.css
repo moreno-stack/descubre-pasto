@@ -5,10 +5,24 @@
    ───────────────────────────────────────────────────────────── */
 
 :root {
-  --volcan: #16121f;     /* fondo */
-  --noche: #211b2e;      /* superficies */
-  --noche-2: #2b2340;    /* superficies elevadas */
-  --borde: #3a3052;
+  --volcan: #06050b;     /* fondo: negro de noche */
+  --noche: #100e1a;      /* superficies */
+  --noche-2: #1a1628;    /* superficies elevadas */
+  --borde: rgba(255,255,255,.1);
+
+  /* Neón nocturno */
+  --neon-rosa: #ff3cac;
+  --neon-cian: #5ef3ff;
+  --neon-azul: #3c6bff;
+  --neon-oro: #ffc94a;
+  --neon-verde: #3dffa8;
+  --neon-morado: #b45cff;
+  --neon-grad: linear-gradient(100deg, var(--neon-rosa) 0%, var(--neon-morado) 45%, var(--neon-cian) 100%);
+  --glow-rosa: 0 0 24px color-mix(in srgb, var(--neon-rosa) 55%, transparent);
+  --sheet-bg: #0b0913;
+  --blob-opacity: .32;
+  --bg-rgb: 6,5,11;
+  --display-black: "Archivo Black", "Bricolage Grotesque Variable", system-ui, sans-serif;
   --talco: #f7f3ec;      /* texto principal */
   --niebla: #ada4bf;     /* texto secundario */
 
@@ -446,3 +460,392 @@ p { margin: 0; }
   .welcome-photo, .rail-card { animation: none !important; }
   .ai-status .ai-dot { animation: none !important; }
 }
+
+/* ═════════════════════════════════════════════════════════════
+   NEÓN NOCTURNO — capa visual que reemplaza el tema anterior
+   ═════════════════════════════════════════════════════════════ */
+
+body { background: var(--volcan); }
+@media (min-width: 600px) { body { background: radial-gradient(circle at 30% 20%, var(--noche-2), #000 60%); } }
+.device { background: var(--volcan); }
+
+/* Fondo vivo */
+.neon-backdrop { position: absolute; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; }
+.neon-blob { position: absolute; left: 0; top: 0; border-radius: 50%; filter: blur(90px); opacity: var(--blob-opacity); }
+.neon-grain { position: absolute; inset: 0; opacity: .07; background-image: radial-gradient(rgba(255,255,255,.8) .6px, transparent .8px); background-size: 3px 3px; }
+.stage { z-index: 1; }
+.convo-head, .explore-head { background: rgba(var(--bg-rgb),.72); backdrop-filter: blur(18px); }
+.explore-head { background: linear-gradient(rgba(var(--bg-rgb),.92) 80%, transparent); }
+
+/* Botón principal */
+.btn-oro, .btn-neon {
+  background: var(--neon-grad); color: #fff;
+  box-shadow: 0 0 0 1px rgba(255,255,255,.15) inset, 0 10px 30px -8px color-mix(in srgb, var(--neon-rosa) 70%, transparent), 0 0 40px -10px color-mix(in srgb, var(--neon-cian) 60%, transparent);
+}
+.btn-neon { position: relative; overflow: hidden; }
+.btn-neon::after {
+  content: ""; position: absolute; inset: 0; transform: translateX(-120%);
+  background: linear-gradient(100deg, transparent 30%, rgba(255,255,255,.45) 50%, transparent 70%);
+  animation: sheen 3.2s ease-in-out infinite;
+}
+@keyframes sheen { 60%, 100% { transform: translateX(120%); } }
+.btn-ghost { border-color: color-mix(in srgb, var(--neon-cian) 45%, transparent); color: var(--neon-cian); }
+.link { color: var(--neon-cian); }
+
+/* Encabezado de inicio */
+.home-bar { background: rgba(var(--bg-rgb),.6); backdrop-filter: blur(16px); }
+.avatar-neon { background: var(--volcan); color: #fff; box-shadow: 0 0 0 2px var(--neon-rosa), var(--glow-rosa); }
+.neon-hero { padding: 10px var(--gutter) 0; }
+.neon-kicker { color: var(--neon-cian); font-weight: 700; font-size: 14px; text-shadow: 0 0 12px color-mix(in srgb, var(--neon-cian) 70%, transparent); }
+.neon-title {
+  margin: 6px 0 18px; font-family: var(--display-black); font-size: 46px; line-height: .98; letter-spacing: -0.01em;
+  background: linear-gradient(100deg, var(--neon-rosa), var(--neon-oro) 35%, var(--neon-cian) 65%, var(--neon-rosa)); background-size: 250% 100%;
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+  filter: drop-shadow(0 0 18px color-mix(in srgb, var(--neon-rosa) 35%, transparent));
+  animation: shimmer 7s linear infinite;
+}
+@keyframes shimmer { to { background-position: -250% 0; } }
+
+/* Carrusel de tarjetas 3D */
+.tilt-rail {
+  display: flex; gap: 16px; padding: 26px var(--gutter) 6px; overflow-x: auto;
+  scroll-snap-type: x mandatory; scrollbar-width: none; perspective: 900px;
+}
+.tilt-rail::-webkit-scrollbar { display: none; }
+.tilt-slot { flex: none; width: 80%; scroll-snap-align: center; }
+.tilt { position: relative; transform-style: preserve-3d; cursor: pointer; }
+.tilt-card {
+  height: 360px; border-radius: 28px; overflow: hidden; background: var(--noche);
+  box-shadow: 0 0 0 2px var(--tone), 0 0 34px -4px var(--tone), 0 30px 50px -20px rgba(0,0,0,.9);
+}
+.tilt-photo { position: absolute; inset: -4%; background-size: cover; background-position: center; }
+.tilt-shade { position: absolute; inset: 0; background: linear-gradient(180deg, transparent 40%, rgba(var(--bg-rgb),.92)); }
+.tilt-glare { position: absolute; inset: 0; pointer-events: none; mix-blend-mode: overlay; }
+.tilt-fav { position: absolute; top: 14px; right: 14px; transform: translateZ(40px); }
+.tilt-copy { position: absolute; left: 16px; right: 16px; bottom: 18px; transform: translateZ(50px); }
+.tilt-copy h2 { margin-top: 10px; font-size: 28px; font-weight: 800; text-shadow: 0 2px 20px rgba(0,0,0,.6); }
+.neon-pill { display: inline-block; padding: 5px 12px; border-radius: 99px; border: 1px solid var(--tone); color: var(--tone); background: rgba(var(--bg-rgb),.65); backdrop-filter: blur(6px); font-size: 12.5px; font-weight: 700; box-shadow: 0 0 14px -2px var(--tone); }
+.tilt-hint { padding: 6px var(--gutter) 0; color: var(--niebla); font-size: 12px; text-align: center; opacity: .7; }
+
+/* Contadores */
+.stat-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.stat {
+  display: grid; justify-items: start; gap: 2px; padding: 14px 12px; border-radius: 20px; text-align: left;
+  background: rgba(255,255,255,.04); border: 1px solid color-mix(in srgb, var(--tone) 60%, transparent);
+  box-shadow: inset 0 0 22px -12px var(--tone);
+}
+.stat span { font-size: 12.5px; font-weight: 700; color: var(--niebla); }
+.stat strong { font-family: var(--display); font-size: 34px; font-weight: 800; line-height: 1; color: var(--tone); text-shadow: 0 0 16px var(--tone); }
+
+/* Tiempo e intereses */
+.time-tile { background: rgba(255,255,255,.04); border: 1px solid color-mix(in srgb, var(--tone) 50%, transparent); }
+.time-tile svg { color: var(--tone); filter: drop-shadow(0 0 6px var(--tone)); }
+.interest-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+.interest-chip {
+  display: inline-flex; align-items: center; gap: 8px; height: 44px; padding: 0 16px; border-radius: 99px;
+  border: 1.5px solid var(--tone); color: var(--tone); font-weight: 700; background: rgba(var(--bg-rgb),.5);
+  box-shadow: 0 0 16px -6px var(--tone), inset 0 0 12px -8px var(--tone);
+}
+
+/* Tarjetas de carruseles y cuadrícula */
+.rail-card, .grid-photo { box-shadow: 0 0 0 1px rgba(255,255,255,.08); }
+.rail-cat { color: var(--neon-cian); }
+.fav.is-saved { background: var(--neon-rosa); box-shadow: var(--glow-rosa); }
+.chip { background: rgba(255,255,255,.05); border: 1px solid var(--borde); }
+.chip { transition: background .25s, box-shadow .25s, color .25s; }
+.chip.is-active { color: #fff; background: var(--neon-grad); border-color: transparent; box-shadow: var(--glow-rosa); }
+.chip-blob { background: var(--neon-grad); box-shadow: var(--glow-rosa); }
+.search { background: rgba(255,255,255,.05); }
+.search:focus-within, .composer:focus-within, .auth-input-wrap:focus-within { border-color: var(--neon-cian); box-shadow: 0 0 18px -6px var(--neon-cian); }
+
+/* Barra de pestañas */
+.tabbar { background: rgba(var(--bg-rgb),.8); border-color: rgba(255,255,255,.1); }
+.tab.is-active { color: #fff; }
+.tab-blob { background: color-mix(in srgb, var(--neon-rosa) 16%, transparent); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--neon-rosa) 60%, transparent), 0 0 22px -6px var(--neon-rosa); }
+.tab.is-active .tab-icon { color: var(--neon-rosa); filter: drop-shadow(0 0 8px var(--neon-rosa)); }
+.tab-badge { background: var(--neon-rosa); border-color: var(--volcan); box-shadow: var(--glow-rosa); }
+
+/* Hojas */
+.sheet { background: var(--sheet-bg); box-shadow: 0 -1px 0 color-mix(in srgb, var(--neon-rosa) 50%, transparent), 0 -20px 60px color-mix(in srgb, var(--neon-rosa) 15%, transparent); }
+.sheet-kicker, .auth-kicker, .hero-hello { color: var(--neon-cian); }
+.sheet-photo-wrap::after { background: linear-gradient(180deg, rgba(var(--bg-rgb),.35), transparent 30%, transparent 60%, var(--sheet-bg)); }
+.sheet-note.is-ok { border-left-color: var(--neon-verde); }
+
+/* Chat y ruta */
+.from-user .bubble { background: var(--neon-grad); color: #fff; box-shadow: 0 6px 24px -10px color-mix(in srgb, var(--neon-rosa) 80%, transparent); }
+.from-ai .bubble { background: rgba(255,255,255,.05); border: 1px solid color-mix(in srgb, var(--neon-cian) 22%, transparent); backdrop-filter: blur(10px); }
+.send { background: var(--neon-grad); color: #fff; box-shadow: var(--glow-rosa); }
+.suggest { background: rgba(255,255,255,.04); }
+.suggest svg { color: var(--neon-cian); }
+.step-bar span { background: var(--neon-grad); box-shadow: 0 0 10px var(--neon-rosa); }
+.stop-pin { background: var(--neon-grad); color: #fff; box-shadow: 0 0 0 4px var(--sheet-bg), 0 0 16px var(--neon-rosa); }
+.timeline-line { background: repeating-linear-gradient(var(--neon-cian) 0 10px, transparent 10px 16px); filter: drop-shadow(0 0 4px var(--neon-cian)); }
+.ai-status.is-connected .ai-dot { background: var(--neon-verde); }
+.convo-dock { background: linear-gradient(transparent, var(--volcan) 30%); }
+
+/* Perfil y vacíos */
+.profile-layer { background: var(--volcan); }
+.profile-card { background: rgba(255,255,255,.04); border: 1px solid var(--borde); }
+.avatar-xl { background: var(--neon-grad); color: #fff; box-shadow: 0 0 40px -6px var(--neon-rosa); }
+.empty-heart { background: color-mix(in srgb, var(--neon-rosa) 12%, transparent); color: var(--neon-rosa); box-shadow: 0 0 30px -6px var(--neon-rosa); }
+.saved-card, .toggle { background: rgba(255,255,255,.04); border: 1px solid var(--borde); }
+
+/* Piezas de la explosión con brillo */
+.burst-piece { box-shadow: 0 0 10px currentColor; filter: drop-shadow(0 0 4px rgba(255,255,255,.4)); }
+
+@media (prefers-reduced-motion: reduce) {
+  .neon-title, .btn-neon::after { animation: none !important; }
+}
+
+/* ═════════════════════════════════════════════════════════════
+   ÓRBITA — interfaz final de Descubre Pasto
+   Todo gira: los lugares orbitan, la ruta es una órbita y los
+   guardados son planetas. Morado y azul con brillo suave.
+   ═════════════════════════════════════════════════════════════ */
+:root {
+  --o1: #e11d48; --o2: #f97316; --lav: #fb7185; --lav-2: #fecdd3;
+  --bg-a: #4f0f1f; --bg-b: #220710; --bg-c: #0a0306;
+  --o-surface: #3a0d18; --core-a: #e11d48; --core-b: #5a0f22;
+  --blob-1: #c81a40; --blob-2: #d9601a; --blob-3: #6a1028;
+  --tab-dim: #b0868e; --chip-text: #f3cfd4; --o-muted: #c99ea6; --o-text: #fff1f2; --on-accent: #fff;
+  --volcan: var(--bg-c);
+  --noche: rgba(255,255,255,.06);
+  --noche-2: rgba(255,255,255,.09);
+  --borde: color-mix(in srgb, var(--lav) 18%, transparent);
+  --talco: var(--o-text);
+  --niebla: var(--o-muted);
+  --bg-rgb: 34,7,16;
+  --sheet-bg: var(--bg-b);
+  --lav: var(--lav);
+  --lav-2: var(--lav-2);
+  --neon-rosa: var(--o1);
+  --neon-cian: var(--o2);
+  --neon-morado: var(--core-a);
+  --neon-oro: var(--lav-2);
+  --neon-verde: #5fe3a1;
+  --neon-azul: var(--o2);
+  --neon-grad: linear-gradient(100deg, var(--o1), var(--o2));
+  --glow-rosa: 0 0 22px color-mix(in srgb, var(--o1) 55%, transparent);
+  --blob-opacity: .34;
+}
+body { background: var(--bg-c); }
+.device { background: radial-gradient(circle at 50% 22%, var(--bg-a) 0%, var(--bg-b) 46%, var(--bg-c) 100%); }
+.neon-blob:nth-child(1) { background: var(--blob-1); }
+.neon-blob:nth-child(2) { background: var(--blob-2); }
+.neon-blob:nth-child(3) { background: var(--blob-3); }
+.talco-speck { position: absolute; top: 0; border-radius: 50%; background: var(--lav-2); box-shadow: 0 0 6px var(--lav); }
+.ringline { position: absolute; left: 50%; top: 50%; border-radius: 50%; border: 1.5px dashed color-mix(in srgb, var(--lav) 32%, transparent); transform: translate(-50%,-50%); pointer-events: none; }
+
+/* Botones y textos base */
+.btn-neon, .btn-oro { background: var(--neon-grad); color: #fff; box-shadow: 0 14px 30px -12px var(--o1); }
+.btn-neon::after { background: linear-gradient(100deg, transparent 30%, rgba(255,255,255,.35) 50%, transparent 70%); }
+.btn-ghost { background: var(--noche); border: 1px solid var(--borde); color: var(--talco); }
+.link { color: var(--lav); }
+.block-title { font-family: var(--display); }
+.chip { background: var(--noche); border: 1px solid var(--borde); color: var(--chip-text); }
+.chip.is-active { background: var(--neon-grad); border-color: transparent; color: #fff; box-shadow: 0 0 18px -6px var(--o1); }
+.home-bar { background: rgba(var(--bg-rgb),.55); }
+.avatar.orbit-avatar { background: var(--neon-grad); color: #fff; box-shadow: 0 0 0 3px var(--bg-b), 0 0 0 4.5px var(--lav); }
+
+/* ── Inicio: carrusel en órbita ── */
+.orbit-hero { padding: 8px var(--gutter) 0; }
+.orbit-kicker { color: var(--lav); font-weight: 700; font-size: 13px; }
+.orbit-title { margin-top: 4px; font-size: 34px; font-weight: 800; line-height: 1.02; }
+.orbit-chips { margin: 14px calc(var(--gutter) * -1) 0; }
+.orbit { position: relative; height: 300px; overflow: visible; margin-top: 18px; perspective: 900px; transform-style: preserve-3d; touch-action: pan-y; cursor: grab; }
+.orbit-ring { position: absolute; left: 50%; bottom: -22px; width: 330px; height: 70px; margin-left: -165px; border-radius: 50%; border: 1.5px dashed color-mix(in srgb, var(--lav) 35%, transparent); transform: rotateX(65deg); }
+.orbit-card {
+  position: absolute; left: 50%; top: 4px; width: 196px; height: 272px; margin-left: -98px;
+  border-radius: 26px; overflow: hidden; background: var(--o-surface); cursor: pointer; user-select: none;
+}
+.orbit-photo { position: absolute; inset: 0; background-size: cover; background-position: center; pointer-events: none; }
+.orbit-shade { position: absolute; inset: 0; background: linear-gradient(180deg, transparent 55%, rgba(10,8,25,.55)); pointer-events: none; }
+.orbit-fav { position: absolute; top: 10px; right: 10px; width: 36px; height: 36px; }
+.orbit-info { min-height: 112px; margin-top: 26px; padding: 0 var(--gutter); text-align: center; }
+.orbit-info h2 { margin-top: 3px; font-size: 27px; font-weight: 800; }
+.orbit-meta { display: flex; justify-content: center; gap: 14px; margin-top: 4px; color: var(--niebla); font-size: 13px; }
+.orbit-meta span { display: inline-flex; align-items: center; gap: 4px; }
+.orbit-dots { display: flex; justify-content: center; gap: 6px; margin-top: 10px; }
+.orbit-dots i { display: block; height: 6px; width: 6px; border-radius: 9px; background: var(--lav); }
+.orbit-cta { display: grid; grid-template-columns: 1fr 54px; gap: 10px; padding: 8px var(--gutter) 0; }
+.orbit-cta .btn { border-radius: 18px; }
+.orbit-open { padding: 0; min-height: 54px; }
+.time-tile { background: var(--noche); border: 1px solid var(--borde); color: var(--talco); }
+.time-tile svg { color: var(--lav); }
+.interest-chip { background: var(--noche); border: 1px solid var(--borde); color: var(--talco); box-shadow: none; }
+.interest-chip svg { color: var(--tone); }
+.fav.is-saved { background: #e04f86; box-shadow: 0 0 14px -2px #e04f86; }
+
+/* ── Explorar: dial de planetas ── */
+.explore-head { background: linear-gradient(rgba(var(--bg-rgb),.95) 80%, transparent); }
+.search { background: var(--noche); border-color: var(--borde); }
+.search:focus-within, .composer:focus-within, .auth-input-wrap:focus-within { border-color: var(--lav); box-shadow: 0 0 18px -6px var(--o1); }
+.filter-pill { display: inline-flex; align-items: center; gap: 6px; margin-top: 10px; height: 32px; padding: 0 12px; border-radius: 99px; background: var(--neon-grad); font-size: 13px; font-weight: 700; }
+.dial { position: relative; height: 150px; margin: 0 0 4px; overflow: hidden; touch-action: pan-y; }
+.dial-arc { position: absolute; left: 50%; top: 36px; width: 560px; height: 560px; margin-left: -280px; border-radius: 50%; border: 1.5px dashed color-mix(in srgb, var(--lav) 32%, transparent); pointer-events: none; }
+.planet { position: absolute; left: 50%; top: 14px; width: 74px; margin-left: -37px; display: grid; justify-items: center; gap: 6px; color: var(--chip-text); font-size: 11.5px; font-weight: 700; }
+.planet-ball { display: grid; place-items: center; width: 48px; height: 48px; border-radius: 50%; background: var(--o-surface); border: 1.5px solid var(--borde); transition: background .3s, box-shadow .3s; }
+.planet.is-on { color: #fff; }
+.planet.is-on .planet-ball { background: radial-gradient(circle at 35% 30%, var(--o1), var(--o2)); border-color: transparent; box-shadow: 0 0 26px -2px var(--o1); }
+.grid-card .grid-photo { border-radius: 20px; }
+.grid-copy h3 { font-family: var(--display); }
+
+/* ── Ficha ── */
+.sheet { background: var(--bg-b); box-shadow: 0 -1px 0 color-mix(in srgb, var(--lav) 40%, transparent), 0 -20px 60px rgba(60,40,160,.25); }
+.sheet-photo-wrap::after { background: linear-gradient(180deg, rgba(10,8,25,.35), transparent 30%, transparent 60%, var(--bg-b)); }
+.sheet-kicker, .auth-kicker, .hero-hello { color: var(--lav); }
+.sheet-meta span { background: rgba(var(--bg-rgb),.85); border: 1px solid var(--borde); color: var(--chip-text); }
+.sheet-fav { background: var(--noche-2); }
+
+/* ── Guardados: sistema solar ── */
+.solar { position: relative; height: 300px; margin-top: 4px; }
+.solar-ring { position: absolute; left: 50%; top: 50%; border-radius: 50%; border: 1.5px dashed color-mix(in srgb, var(--lav) 30%, transparent); animation: spin 40s linear infinite; }
+.solar-planet { position: absolute; border-radius: 50%; background: var(--o-surface) center / cover; border: 2.5px solid rgba(199,193,255,.85); box-shadow: 0 8px 18px rgba(0,0,0,.6); }
+.solar-sun { position: absolute; left: 50%; top: 50%; width: 96px; height: 96px; margin: -48px; border-radius: 50%; display: grid; place-items: center; align-content: center; background: radial-gradient(circle at 35% 30%, var(--core-a), var(--core-b)); box-shadow: 0 0 46px -8px var(--o1); }
+.solar-sun strong { font-family: var(--display); font-size: 32px; line-height: 1; }
+.solar-sun small { color: var(--niebla); font-size: 11.5px; }
+.saved-hint { padding: 0 var(--gutter); text-align: center; font-size: 12.5px; }
+.saved-card, .toggle, .profile-card { background: var(--noche); border: 1px solid var(--borde); }
+.saved-photo { border-radius: 50%; border: 2px solid var(--lav); }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── Chat: planeta con luna ── */
+.ai-orb { position: relative; flex: none; border-radius: 50%; background: radial-gradient(circle at 35% 30%, var(--core-a), var(--core-b)); box-shadow: 0 0 22px -4px var(--o1); }
+.ai-orb::before { content: ""; position: absolute; inset: -6px; border-radius: 50%; border: 1.5px dashed color-mix(in srgb, var(--lav) 55%, transparent); }
+.ai-orb-moonpath { position: absolute; inset: -6px; animation: spin 6s linear infinite; }
+.ai-orb.is-busy .ai-orb-moonpath { animation-duration: 1.4s; }
+.ai-orb-moon { position: absolute; left: 50%; top: -4px; width: 9px; height: 9px; margin-left: -4.5px; border-radius: 50%; background: var(--o2); box-shadow: 0 0 8px var(--o2); }
+.convo-head { background: rgba(var(--bg-rgb),.75); border-bottom-color: var(--borde); }
+.from-user .bubble { background: var(--neon-grad); color: #fff; box-shadow: 0 6px 20px -10px var(--o1); }
+.from-ai .bubble { background: var(--noche); border: 1px solid var(--borde); }
+.send { background: var(--neon-grad); color: #fff; box-shadow: 0 0 16px -4px var(--o1); }
+.suggest { background: var(--noche); border-color: var(--borde); }
+.suggest svg { color: var(--lav); }
+.composer { background: var(--noche); border-color: var(--borde); }
+.mention { background: rgba(255,255,255,.08); }
+
+/* ── Ruta en órbita ── */
+.route-orbit { position: relative; width: 100%; aspect-ratio: 320 / 210; margin-top: 12px; }
+.route-orbit-svg { position: absolute; inset: 0; width: 100%; height: 100%; filter: drop-shadow(0 0 6px color-mix(in srgb, var(--o1) 60%, transparent)); }
+.route-core { position: absolute; left: 50%; top: 50%; width: 100px; height: 100px; margin: -50px; border-radius: 50%; display: grid; place-items: center; align-content: center; text-align: center; background: radial-gradient(circle at 35% 30%, var(--core-a), var(--core-b)); box-shadow: 0 0 36px -10px var(--o1); }
+.route-core strong { font-family: var(--display); font-size: 24px; line-height: 1; }
+.route-core small { margin-top: 3px; color: var(--niebla); font-size: 10.5px; }
+.route-stop { position: absolute; width: 48px; height: 48px; margin: -24px; border-radius: 50%; background: var(--o-surface) center / cover; border: 3px solid var(--bg-b); box-shadow: 0 0 0 2px var(--lav), 0 8px 16px rgba(0,0,0,.6); }
+.route-stop em { position: absolute; right: -6px; bottom: -6px; width: 21px; height: 21px; border-radius: 50%; display: grid; place-items: center; background: var(--neon-grad); color: #fff; font-style: normal; font-weight: 800; font-size: 11.5px; }
+.step-bar span { background: var(--neon-grad); box-shadow: 0 0 8px var(--o1); }
+.stop-pin { background: var(--neon-grad); color: #fff; box-shadow: 0 0 0 4px var(--bg-b); }
+.stop-card { background: rgba(255,255,255,.06); }
+.timeline-line { background: repeating-linear-gradient(var(--lav) 0 10px, transparent 10px 16px); }
+
+/* ── Perfil: intereses en órbita ── */
+.profile-orbit { position: relative; width: 230px; height: 230px; display: grid; place-items: center; margin: 4px 0 6px; }
+.profile-orbit-ring { position: absolute; inset: 0; border-radius: 50%; border: 1.5px dashed color-mix(in srgb, var(--lav) 35%, transparent); animation: spin 50s linear infinite; }
+.orbit-badge { position: absolute; transform: translate(-50%, -50%); }
+.orbit-badge-inner { display: inline-flex; align-items: center; gap: 6px; height: 30px; padding: 0 11px; border-radius: 99px; background: rgba(var(--bg-rgb),.92); border: 1px solid var(--borde); font-size: 12px; font-weight: 700; white-space: nowrap; opacity: .45; animation: spin 50s linear infinite reverse; transition: opacity .3s; }
+.orbit-badge-inner i { width: 9px; height: 9px; border-radius: 50%; background: var(--tone); }
+.orbit-badge.is-on .orbit-badge-inner { opacity: 1; box-shadow: 0 0 14px -4px var(--tone); }
+.avatar-xl { width: 100px; height: 100px; font-size: 38px; background: var(--neon-grad); color: #fff; box-shadow: 0 0 0 5px var(--core-b), 0 0 0 7px var(--lav), 0 0 50px -6px var(--o1); }
+.profile-layer { background: radial-gradient(circle at 50% 22%, var(--bg-a) 0%, var(--bg-b) 46%, var(--bg-c) 100%); }
+.toggle.is-on .toggle-track { background: var(--neon-grad); }
+
+/* ── Bienvenida: fotos en órbita ── */
+.welcome-orbit { color: var(--talco); }
+.welcome-system { position: relative; width: 260px; height: 260px; margin: calc(var(--safe-top) + 40px) auto 0; }
+.welcome-spin { position: absolute; inset: 0; animation: spin 60s linear infinite; }
+.welcome-photo-orb { position: absolute; width: 68px; height: 68px; border-radius: 50%; background: var(--o-surface) center / cover; border: 2.5px solid rgba(199,193,255,.7); box-shadow: 0 10px 24px rgba(0,0,0,.6); animation: spin 60s linear infinite reverse; }
+.welcome-core { position: absolute; left: 50%; top: 50%; width: 100px; height: 100px; margin: -50px; border-radius: 50%; display: grid; place-items: center; background: radial-gradient(circle at 35% 30%, var(--core-a), var(--core-b)); box-shadow: 0 0 50px -6px var(--o1); }
+.welcome-orbit .welcome-copy { margin-top: auto; text-align: center; }
+.welcome-orbit .welcome-copy h1 { font-size: 38px; max-width: none; }
+.welcome-orbit .welcome-copy p { margin: 12px auto 22px; color: var(--niebla); }
+.welcome-guest { color: var(--lav-2); }
+
+/* ── Barra de pestañas ── */
+.tabbar { background: rgba(var(--bg-rgb),.82); border-color: var(--borde); }
+.tab { color: var(--tab-dim); }
+.tab.is-active { color: #fff; }
+.tab-blob { background: color-mix(in srgb, var(--o1) 20%, transparent); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--lav) 50%, transparent), 0 0 18px -6px var(--o1); }
+.tab.is-active .tab-icon { color: var(--lav-2); filter: drop-shadow(0 0 6px var(--o1)); }
+.tab-badge { background: #e04f86; border-color: var(--bg-b); box-shadow: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  .solar-ring, .ai-orb-moonpath, .profile-orbit-ring, .orbit-badge-inner, .welcome-spin, .welcome-photo-orb { animation: none !important; }
+}
+
+/* Ajustes Órbita */
+.explore-head { position: relative; padding-bottom: 0; }
+.explore-head .dial { margin: 6px calc(var(--gutter) * -1) 0; }
+.saved-card { background: var(--o-surface); }
+.screen-scroll > .btn-block { width: calc(100% - var(--gutter) * 2); margin: 14px var(--gutter) 0; }
+.orbit { overflow: visible; }
+.orbit-card { will-change: transform; }
+.dial { overflow: clip; }
+.orbit-hero, .orbit-info { overflow: clip; }
+.btn-neon, .btn-oro, .chip.is-active, .send, .from-user .bubble, .route-stop em, .stop-pin, .filter-pill, .avatar.orbit-avatar, .avatar-xl { color: var(--on-accent); }
+
+/* ── Entrada "Carnaval en órbita" ── */
+.splash-carnaval {
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 50% 38%, rgba(249,115,22,.35) 0%, transparent 45%),
+    radial-gradient(circle at 50% 30%, var(--bg-a) 0%, var(--bg-b) 55%, var(--bg-c) 100%);
+}
+.splash-stripe { position: absolute; left: -10%; width: 120%; height: 16%; opacity: .95; filter: saturate(1.1); box-shadow: 0 0 40px rgba(0,0,0,.3); }
+.splash-system { position: relative; width: 280px; height: 280px; display: grid; place-items: center; }
+.splash-system .ringline { border-color: color-mix(in srgb, var(--lav) 45%, transparent); }
+.splash-halo { position: absolute; left: 50%; top: 50%; width: 220px; height: 220px; margin: -110px; border-radius: 50%; background: radial-gradient(circle, rgba(249,115,22,.55), rgba(225,29,72,.25) 45%, transparent 70%); filter: blur(10px); }
+.splash-spin { position: absolute; left: 50%; top: 50%; width: 0; height: 0; animation: spin 14s linear infinite; }
+.splash-planet { position: absolute; left: -29px; top: -29px; width: 58px; height: 58px; border-radius: 50%; background: var(--o-surface) center / cover; border: 2.5px solid var(--lav-2); box-shadow: 0 8px 20px rgba(0,0,0,.55), 0 0 18px -4px var(--o1); }
+.splash-core { position: relative; z-index: 2; display: grid; place-items: center; width: 108px; height: 108px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, var(--o2), var(--o1) 45%, var(--core-b)); box-shadow: 0 0 0 4px rgba(255,255,255,.08), 0 0 60px -6px var(--o2); }
+.splash-core .barniz-mark path:first-child { stroke: #fff; }
+.splash-carnaval .splash-title { margin-top: 18px; font-size: 40px; background: linear-gradient(100deg, #fff 0%, #fecdd3 40%, #fdba74 100%); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.splash-carnaval .splash-title span { background: inherit; -webkit-background-clip: text; background-clip: text; }
+.splash-carnaval .splash-sub { color: #fdba74; font-weight: 700; text-transform: none; }
+
+/* Mejoras Carnaval rojo */
+.orbit-title { background: linear-gradient(100deg, #fff 30%, #fecdd3 70%, #fdba74); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.home-brand { color: var(--o-text); }
+.orbit-kicker { color: #fdba74; }
+.welcome-core { background: radial-gradient(circle at 35% 30%, var(--o2), var(--o1) 45%, var(--core-b)); }
+.welcome-orbit .welcome-copy h1 { background: linear-gradient(100deg, #fff 30%, #fecdd3 70%, #fdba74); -webkit-background-clip: text; background-clip: text; color: transparent; }
+@media (prefers-reduced-motion: reduce) { .splash-spin { animation: none !important; } }
+.splash-stripe { height: 26%; }
+.splash-system .ringline { border: 2px solid rgba(254,205,211,.38); box-shadow: 0 0 22px -4px rgba(249,115,22,.6), inset 0 0 22px -8px rgba(249,115,22,.5); transform: none; }
+.splash-carnaval .splash-sub { letter-spacing: .18em; }
+
+/* ── Entrada cinematográfica: PASTO con fotos dentro de las letras ── */
+.splash-cine { overflow: hidden; background: radial-gradient(circle at 50% 50%, #2a0812 0%, #0a0306 70%); gap: 0; }
+.cine-line { position: absolute; left: 8%; right: 8%; top: 50%; height: 2px; margin-top: -1px; background: linear-gradient(90deg, transparent, #fdba74, #fff, #fdba74, transparent); box-shadow: 0 0 24px 4px rgba(249,115,22,.7); transform-origin: 50% 50%; }
+.cine-stage { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.cine-kicker { color: #fecdd3; font-family: var(--display); font-weight: 700; font-size: 15px; margin-bottom: 6px; padding-left: .5em; }
+.cine-word-wrap { position: relative; display: grid; will-change: transform; }
+.cine-word {
+  grid-area: 1 / 1;
+  margin: 0; padding: 0 4px;
+  font-family: var(--display-black, "Archivo Black"), sans-serif;
+  font-size: 88px; line-height: .92; letter-spacing: -0.02em;
+  color: transparent;
+  background-size: 180% auto; background-position: 20% 50%;
+  -webkit-background-clip: text; background-clip: text;
+  filter: drop-shadow(0 0 28px rgba(225,29,72,.45));
+  animation: cine-pan 3.6s ease-out forwards;
+}
+@keyframes cine-pan { from { background-position: 0% 40%; background-size: 210% auto; } to { background-position: 60% 55%; background-size: 160% auto; } }
+.cine-word-sheen { background-image: linear-gradient(105deg, transparent 35%, rgba(255,255,255,.85) 50%, transparent 65%) !important; background-size: 300% 100% !important; background-position: 150% 0; filter: none; animation: cine-sheen 1s ease-in-out 1.5s forwards; }
+@keyframes cine-sheen { from { background-position: 150% 0; } to { background-position: -50% 0; } }
+.cine-sub { margin-top: 14px; color: #fdba74; font-weight: 700; font-size: 14px; letter-spacing: .3em; }
+.cine-flash { position: absolute; inset: 0; background: radial-gradient(circle at 50% 50%, #fff 0%, #fdba74 35%, rgba(225,29,72,.6) 70%); pointer-events: none; }
+.cine-grain { position: absolute; inset: 0; opacity: .08; pointer-events: none; background-image: radial-gradient(rgba(255,255,255,.9) .6px, transparent .8px); background-size: 3px 3px; }
+.cine-vignette { position: absolute; inset: 0; pointer-events: none; background: radial-gradient(circle at 50% 50%, transparent 45%, rgba(0,0,0,.65)); }
+@media (prefers-reduced-motion: reduce) { .cine-word { animation: none; } }
+
+/* Rutas en Google Maps */
+.maps-go { margin-top: 10px; width: 100%; justify-content: center; text-decoration: none; }
+.route-card { margin-top: 10px; display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 16px; text-decoration: none; color: inherit;
+  background: linear-gradient(135deg, rgba(225,29,72,.22), rgba(249,115,22,.16)); border: 1px solid rgba(251,113,133,.35); }
+.route-card-icon { flex: none; width: 38px; height: 38px; border-radius: 12px; display: grid; place-items: center; background: linear-gradient(135deg, var(--o1), var(--o2)); color: #fff; }
+.route-card-copy { display: flex; flex-direction: column; min-width: 0; }
+.route-card-copy strong { font-size: 14px; }
+.route-card-copy small { font-size: 12px; opacity: .75; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.route-card-modes { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
+.route-card-modes a { font-size: 12px; padding: 5px 10px; border-radius: 999px; text-decoration: none; color: inherit; border: 1px solid rgba(251,113,133,.35); background: rgba(255,255,255,.04); }
+.route-card-modes a.is-on { background: linear-gradient(135deg, var(--o1), var(--o2)); color: #fff; border-color: transparent; }

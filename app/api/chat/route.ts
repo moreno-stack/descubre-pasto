@@ -1,6 +1,31 @@
 import { NextResponse } from "next/server";
 import { getGroq } from "@/lib/groq";
-import { places } from "@/lib/places";
+import { places, type Place } from "@/lib/places";
+import { asksForDirections, detectMode, findPlaceInText } from "@/lib/maps";
+import { buildDirections } from "@/lib/directions";
+
+/** Si el usuario pide ir a un sitio, arma la ruta en Google Maps. */
+function directionsFor(message: string, history: ChatMessage[], origin?: { latitude: number; longitude: number }) {
+  if (!asksForDirections(message)) return null;
+  let place = findPlaceInText(message);
+  // "¿cómo llego?" sin nombre: usar el último lugar mencionado en la conversación
+  if (!place) {
+    for (const m of [...history].reverse()) {
+      place = findPlaceInText(m.content);
+      if (place) break;
+    }
+  }
+  let target: Place | undefined = place;
+  if (!target) {
+    // Lugar que no está en el catálogo: igual se busca en Google Maps
+    const m = message.match(/(?:ir|llegar|llego|voy|visitar|conocer|ll[eé]vame|ruta)\s+(?:a|al|hasta|hacia|para)?\s*(?:la|el|los|las)?\s*([^?.!,]{3,60})/i);
+    const name = m?.[1]?.replace(/\b(caminando|a pie|en carro|en taxi|en bus|en moto|en bici(cleta)?)\b.*$/i, "").trim();
+    if (!name) return null;
+    target = { name, kind: "Lugar", category: "Cultura", image: "", id: "externo" } as Place;
+  }
+  const d = buildDirections([target], { origin, mode: detectMode(message) });
+  return { ...d, inCatalog: !!place };
+}
 
 type ChatMessage = {
   role: "user" | "assistant" | "system";
@@ -15,7 +40,19 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Mensaje inválido" }, { status: 400 });
     }
 
+    const { origin } = context as { origin?: { latitude: number; longitude: number } };
+    const directions = directionsFor(message, history as ChatMessage[], origin);
+
     if (!process.env.GROQ_API_KEY) {
+      if (directions) {
+        return NextResponse.json({
+          message: `¡Listo! Te dejo la ruta hacia **${directions.places[0].name}** en Google Maps. Toca el botón para abrirla con tu ubicación actual.`,
+          timestamp: new Date().toISOString(),
+          mentionedPlaces: [],
+          suggestsRoute: false,
+          directions,
+        });
+      }
       return NextResponse.json(
         { error: "GROQ_API_KEY no configurada. Configura tu clave en .env.local." },
         { status: 503 }
@@ -59,6 +96,8 @@ TU COMPORTAMIENTO:
 - Respondes en español colombiano, de forma natural y conversacional
 - Máximo 3 párrafos por respuesta, directo al punto
 - Si el usuario tiene favoritos, referéncialos cuando sea relevante
+- Si el usuario dice a dónde quiere ir o pregunta cómo llegar, la app le mostrará un botón con la ruta en Google Maps desde su ubicación: dale 1 o 2 tips útiles para llegar (zona, si conviene caminar, taxi o bus) y dile que toque el botón. Nunca inventes direcciones exactas ni números de calle.
+${directions ? `- En este mensaje el usuario quiere ir a: ${directions.places[0].name}. La ruta ya está lista en el botón.` : ""}
 `.trim();
 
     const systemMessage: ChatMessage = {
@@ -100,7 +139,8 @@ TU COMPORTAMIENTO:
       message: responseMessage,
       timestamp: new Date().toISOString(),
       mentionedPlaces,
-      suggestsRoute,
+      suggestsRoute: directions ? false : suggestsRoute,
+      directions,
     });
   } catch (error) {
     console.error("Chat API Error:", error);

@@ -9,7 +9,8 @@ import { apiUrl, checkGroq } from "@/lib/api";
 import { success, tap } from "@/lib/haptics";
 import { useBurst } from "@/components/app/Burst";
 import { FavButton } from "@/components/app/PlaceCard";
-import { RichText, TypingDots, bubbleMotion } from "@/components/app/ChatBits";
+import { DirectionsCard, RichText, TypingDots, bubbleMotion } from "@/components/app/ChatBits";
+import { AiOrb, RouteOrbit } from "@/components/app/OrbitBits";
 
 type Message = {
   id: string;
@@ -225,7 +226,7 @@ export function RouteAssistant({ favorites, onRecommendationGenerated, onFavorit
       <header className="convo-head route-head">
         <div className="route-head-row">
           <div>
-            <h1>Tu recorrido</h1>
+            <h1>Tu órbita de hoy</h1>
             <p className={`ai-status is-${groqConnected === null ? "checking" : groqConnected ? "connected" : "disconnected"}`}>
               <span className="ai-dot" />
               {groqConnected === null ? "Conectando…" : groqConnected ? "IA activa" : "Modo básico"}
@@ -251,7 +252,10 @@ export function RouteAssistant({ favorites, onRecommendationGenerated, onFavorit
             <div className={`bubble ${m.recommendation ? "bubble-wide" : ""}`}>
               <RichText text={m.content} />
               {m.recommendation && (
-                <RouteTimeline rec={m.recommendation} favorites={favorites} onOpen={onPlaceSelect} onFavorite={onFavoriteToggle} />
+                <>
+                  <RouteOrbit rec={m.recommendation} onOpen={onPlaceSelect} />
+                  <RouteTimeline rec={m.recommendation} favorites={favorites} onOpen={onPlaceSelect} onFavorite={onFavoriteToggle} />
+                </>
               )}
               <time>{m.timestamp.toLocaleTimeString("es-CO", { hour: "2-digit", minute: "2-digit" })}</time>
             </div>
@@ -334,6 +338,7 @@ function RouteTimeline({ rec, favorites, onOpen, onFavorite }: { rec: Recommenda
         );
       })}
       </div>
+      {rec.directions && <DirectionsCard directions={rec.directions} />}
       {rec.note && <p className="timeline-note">{rec.note}</p>}
     </>
   );

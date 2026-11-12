@@ -17,6 +17,7 @@ import { BurstProvider } from "./Burst";
 import { Splash } from "./Splash";
 import { TABS, TabBar, type Tab } from "./TabBar";
 import { PlaceSheet } from "./PlaceSheet";
+import { NeonBackdrop } from "./NeonBackdrop";
 
 type ActiveUser = { email: string; displayName: string };
 
@@ -85,6 +86,13 @@ export function MobileApp() {
 
   const go = (next: Tab) => { setPrevTab(tab); setTab(next); };
   const toggleFavorite = (id: string) => setFavorites((f) => (f.includes(id) ? f.filter((x) => x !== id) : [...f, id]));
+  function routeWithPlace(p: Place) {
+    const ids = favorites.includes(p.id) ? favorites : [...favorites, p.id];
+    setFavorites(ids);
+    setRouteContext({ prefilledFavorites: ids, source: "explorar" });
+    setSelected(null);
+    go("Ruta");
+  }
   const clearRouteContext = useCallback(() => setRouteContext({}), []);
 
   const displayName = user?.displayName ?? "Visitante";
@@ -109,6 +117,8 @@ export function MobileApp() {
           go("Ruta");
         }}
         onProfile={() => setProfileOpen(true)}
+        onSaved={() => go("Guardados")}
+        onRoutePlace={(p) => routeWithPlace(p)}
       />
     ),
     Explorar: <ExploreScreen filter={exploreFilter} onFilter={setExploreFilter} favorites={favorites} onOpenPlace={setSelectedPlace} onFavorite={toggleFavorite} />,
@@ -149,6 +159,7 @@ export function MobileApp() {
       <BurstProvider>
         <LayoutGroup>
           <div className="device">
+            <NeonBackdrop />
             {ready && gate && (
               <WelcomeGate onSignIn={() => setAuthMode("login")} onRegister={() => setAuthMode("register")} onGuest={() => setGuest(true)} />
             )}
@@ -204,13 +215,7 @@ export function MobileApp() {
                   layoutKey={sheetKey}
                   onClose={() => setSelectedPlace(null)}
                   onFavorite={() => toggleFavorite(selectedPlace.id)}
-                  onRoute={() => {
-                    const ids = favorites.includes(selectedPlace.id) ? favorites : [...favorites, selectedPlace.id];
-                    setFavorites(ids);
-                    setRouteContext({ prefilledFavorites: ids, source: "explorar" });
-                    setSelectedPlace(null);
-                    go("Ruta");
-                  }}
+                  onRoute={() => routeWithPlace(selectedPlace)}
                 />
               )}
             </AnimatePresence>

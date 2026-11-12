@@ -5,6 +5,7 @@ import { Clock3, MapPin, Navigation, X } from "lucide-react";
 import type { Place } from "@/lib/places";
 import { GooglePlaceMap } from "@/components/GooglePlaceMap";
 import { FavButton } from "./PlaceCard";
+import { photoCredit } from "@/lib/placeImages";
 
 type Props = {
   place: Place;
@@ -65,6 +66,7 @@ export function PlaceSheet({ place, saved, layoutKey, onClose, onFavorite, onRou
             <Reveal><h2 id="sheet-title">{place.name}</h2></Reveal>
             <Reveal><p className="sheet-lead">{place.description}</p></Reveal>
             {place.imageIsIllustrative && <Reveal><p className="sheet-note">La fotografía es de referencia y puede no corresponder exactamente a este sitio.</p></Reveal>}
+            {photoCredit(place.name) && <Reveal><p className="sheet-note">{photoCredit(place.name)}</p></Reveal>}
 
             <Reveal className="sheet-meta">
               {place.visitMinutes && <span><Clock3 size={14} /> {place.visitMinutes} min de visita</span>}

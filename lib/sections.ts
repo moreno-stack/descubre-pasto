@@ -17,10 +17,10 @@ export const sections: Section[] = [
 
 /** Color de barniz que identifica cada interés en toda la app. */
 export const interestStyle: Record<Interest, { color: string; icon: LucideIcon; hint: string }> = {
-  Cultura: { color: "var(--rosa)", icon: Theater, hint: "Arte, fiestas y saberes" },
-  Historia: { color: "var(--rojo)", icon: BookOpen, hint: "Memoria de la ciudad" },
-  Gastronomía: { color: "var(--oro)", icon: Utensils, hint: "Cuy, hervido, empanadas" },
-  Naturaleza: { color: "var(--verde)", icon: Mountain, hint: "Laguna, volcán y páramo" },
+  Cultura: { color: "var(--neon-rosa)", icon: Theater, hint: "Arte, fiestas y saberes" },
+  Historia: { color: "var(--neon-cian)", icon: BookOpen, hint: "Memoria de la ciudad" },
+  Gastronomía: { color: "var(--neon-oro)", icon: Utensils, hint: "Cuy, hervido, empanadas" },
+  Naturaleza: { color: "var(--neon-verde)", icon: Mountain, hint: "Laguna, volcán y páramo" },
 };
 
 const photoScore = (p: Place) => (p.image && !p.imageIsIllustrative ? 0 : p.image ? 1 : 2);

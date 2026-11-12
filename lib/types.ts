@@ -29,6 +29,8 @@ export interface Recommendation {
   route: RouteStop[];
   estimatedMinutes: number;
   note: string;
+  /** Ruta del recorrido en Google Maps. */
+  directions?: import("@/lib/directions").Directions | null;
 }
 
 /** Payload que envía el cliente a POST /api/recommend. */

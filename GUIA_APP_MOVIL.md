@@ -38,6 +38,19 @@ La versión web anterior quedó guardada en la carpeta `_version-web/`, por si l
 - Vibración suave al tocar (háptica) en el celular.
 - Si el celular tiene activado "reducir movimiento", las animaciones se desactivan.
 
+### Fase 4: interfaz "Órbita"
+Todo gira: los lugares orbitan, la ruta es una órbita y los guardados son planetas. Colores "Carnaval rojo": vinotinto profundo con rojo, naranja y rosa.
+- **Entrada cinematográfica:** una línea de luz se abre como un ojo, aparece "PASTO" gigante con fotos del Carnaval, la Catedral y la Cocha moviéndose dentro de las letras, un destello cruza el texto y la cámara atraviesa la palabra hasta entrar a la app.
+- **Bienvenida:** fotos de Pasto que orbitan despacio alrededor del logo.
+- **Inicio:** carrusel 3D circular que se gira con el dedo (con inercia y vibración al pasar cada lugar). La tarjeta del frente se ilumina y abajo aparece su información con "Agregar a mi ruta". Los chips (Imperdibles, Templos, Plazas, Cultura, Naturaleza, Sabores) cambian qué lugares orbitan.
+- **Explorar:** las categorías son planetas sobre un dial curvo que se desliza o se toca.
+- **Ficha:** la foto crece desde la tarjeta; se cierra arrastrando hacia abajo.
+- **Ruta:** la ruta generada se dibuja como una órbita con las paradas numeradas y, debajo, la lista con tiempos.
+- **Chat:** el avatar de la IA es un planeta con una luna que gira (más rápido mientras responde).
+- **Guardados:** sistema solar con tus lugares orbitando; toca un planeta para abrirlo.
+- **Perfil:** tus intereses orbitan tu avatar; los activos brillan.
+- Se mantienen el confeti al guardar, la vibración y las transiciones.
+
 ## Cómo probarla ahora (sin APK)
 
 ```bash

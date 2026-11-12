@@ -38,9 +38,22 @@ export function ProfileScreen({ user, initials, favoritesCount, selectedInterest
         </header>
 
         <section className="profile-card">
-          <motion.span className="avatar avatar-xl" initial={{ rotate: -20, scale: 0.6 }} animate={{ rotate: 0, scale: 1 }} transition={{ type: "spring", stiffness: 260, damping: 14, delay: 0.15 }}>
-            {initials}
-          </motion.span>
+          <div className="profile-orbit">
+            <span className="profile-orbit-ring">
+              {interests.map((it, i) => {
+                const on = selectedInterests.includes(it);
+                const a = (i / interests.length) * Math.PI * 2 - Math.PI / 2;
+                return (
+                  <span key={it} className={`orbit-badge ${on ? "is-on" : ""}`} style={{ left: `${50 + Math.cos(a) * 50}%`, top: `${50 + Math.sin(a) * 50}%`, ["--tone" as string]: interestStyle[it].color }}>
+                    <span className="orbit-badge-inner"><i />{it}</span>
+                  </span>
+                );
+              })}
+            </span>
+            <motion.span className="avatar avatar-xl" initial={{ rotate: -20, scale: 0.6 }} animate={{ rotate: 0, scale: 1 }} transition={{ type: "spring", stiffness: 260, damping: 14, delay: 0.15 }}>
+              {initials}
+            </motion.span>
+          </div>
           <h2>{user?.displayName ?? "Visitante"}</h2>
           <p>{user?.email ?? "Crea una cuenta para conservar tus guardados."}</p>
           <div className="profile-stats">

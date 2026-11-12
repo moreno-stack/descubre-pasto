@@ -6,8 +6,9 @@ import { Check, Heart, Navigation, Send, Sparkles } from "lucide-react";
 import { places, type Interest, type Place } from "@/lib/places";
 import { apiUrl, checkGroq } from "@/lib/api";
 import { tap } from "@/lib/haptics";
-import { BarnizMark } from "@/components/app/BarnizMark";
-import { RichText, TypingDots, bubbleMotion } from "@/components/app/ChatBits";
+import { AiOrb } from "@/components/app/OrbitBits";
+import { DirectionsCard, RichText, TypingDots, bubbleMotion } from "@/components/app/ChatBits";
+import type { Directions } from "@/lib/directions";
 
 type MentionedPlace = { id: string; name: string; category: string; neighborhood: string; image: string };
 
@@ -18,6 +19,7 @@ type Message = {
   timestamp: Date;
   mentionedPlaces?: MentionedPlace[];
   suggestsRoute?: boolean;
+  directions?: Directions | null;
 };
 
 type ChatBotProps = {
@@ -34,6 +36,7 @@ const QUICK_SUGGESTIONS = [
   "Recomiéndame comida típica",
   "Lugares históricos del centro",
   "¿Qué hacer con poco presupuesto?",
+  "¿Cómo llego a la Laguna de La Cocha?",
 ];
 
 export function ChatBot({ favorites, selectedInterests, activeView, onPlaceSelect, onCreateRoute, onFavoriteToggle }: ChatBotProps) {
@@ -92,6 +95,7 @@ export function ChatBot({ favorites, selectedInterests, activeView, onPlaceSelec
             timestamp: new Date(),
             mentionedPlaces: data.mentionedPlaces || [],
             suggestsRoute: data.suggestsRoute || false,
+            directions: data.directions ?? null,
           },
         ]);
       } catch {
@@ -117,7 +121,7 @@ export function ChatBot({ favorites, selectedInterests, activeView, onPlaceSelec
   return (
     <div className="convo">
       <header className="convo-head">
-        <span className="convo-avatar"><BarnizMark size={30} /></span>
+        <AiOrb busy={loading} />
         <div>
           <h1>Asistente Pasto</h1>
           <p className={`ai-status is-${groqStatus}`}>
@@ -159,6 +163,8 @@ export function ChatBot({ favorites, selectedInterests, activeView, onPlaceSelec
                   })}
                 </div>
               )}
+
+              {m.directions && <DirectionsCard directions={m.directions} />}
 
               {m.suggestsRoute && m.role === "assistant" && onCreateRoute && (
                 <button className="btn btn-oro btn-sm" onClick={() => onCreateRoute({ interests: selectedInterests })}>

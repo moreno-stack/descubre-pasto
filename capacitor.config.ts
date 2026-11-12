@@ -4,19 +4,19 @@ const config: CapacitorConfig = {
   appId: "co.edu.ucc.descubrepasto",
   appName: "Descubre Pasto",
   webDir: "out",
-  backgroundColor: "#16121f",
+  backgroundColor: "#220710",
   android: {
     allowMixedContent: false,
   },
   plugins: {
     SplashScreen: {
       launchShowDuration: 600,
-      backgroundColor: "#16121f",
+      backgroundColor: "#220710",
       showSpinner: false,
     },
     StatusBar: {
       style: "DARK",
-      backgroundColor: "#16121f",
+      backgroundColor: "#220710",
       overlaysWebView: true,
     },
   },

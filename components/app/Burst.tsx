@@ -9,7 +9,7 @@ import { AnimatePresence, motion, useReducedMotion } from "motion/react";
  * Se usa al guardar un favorito y cuando el asistente termina un recorrido.
  */
 
-const COLORS = ["var(--rojo)", "var(--oro)", "var(--verde)", "var(--turquesa)", "var(--rosa)"];
+const COLORS = ["var(--neon-rosa)", "var(--neon-cian)", "var(--neon-oro)", "var(--neon-morado)", "var(--neon-verde)"];
 const SHAPES = ["rombo", "petalo", "punto", "triangulo"] as const;
 
 type Piece = { id: number; x: number; y: number; dx: number; dy: number; rot: number; color: string; shape: (typeof SHAPES)[number]; size: number };

@@ -4,6 +4,7 @@ import { AnimatePresence, motion, type PanInfo } from "motion/react";
 import { Heart, Navigation, Trash2 } from "lucide-react";
 import { places, type Place } from "@/lib/places";
 import { tap } from "@/lib/haptics";
+import { SolarSystem } from "@/components/app/OrbitBits";
 
 type Props = {
   favorites: string[];
@@ -19,9 +20,11 @@ export function SavedScreen({ favorites, onOpenPlace, onRemove, onPlanWithSaved,
   return (
     <div className="screen-scroll">
       <header className="screen-head">
-        <h1 className="screen-title">Guardados</h1>
-        {saved.length > 0 && <p className="screen-sub">Desliza un lugar a la izquierda para quitarlo.</p>}
+        <h1 className="screen-title">Tus guardados</h1>
       </header>
+
+      {saved.length > 0 && <SolarSystem saved={saved} onOpen={onOpenPlace} />}
+      {saved.length > 0 && <p className="screen-sub saved-hint">Toca un planeta para abrirlo · desliza un lugar a la izquierda para quitarlo</p>}
 
       {saved.length > 0 && (
         <motion.button className="btn btn-oro btn-block" whileTap={{ scale: 0.96 }} onClick={() => { tap("medium"); onPlanWithSaved(); }}>
