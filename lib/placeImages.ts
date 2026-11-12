@@ -79,6 +79,9 @@ export type CommonsPhoto = { file: string; author: string; license: string };
 
 /** Fotos reales del lugar. */
 export const commonsPhotos: Record<string, CommonsPhoto> = {
+  "Plazoleta Cristo Rey": { file: "Iglesia de \"lenin\" en Pasto.JPG", author: "Harrysaurio", license: "CC BY-SA 3.0" },
+  "Plazoleta de La Merced": { file: "Iglesia de La Merced Pasto Nariño 1.jpg", author: "Martinduquea", license: "CC BY-SA 3.0" },
+  "Parque de Santiago": { file: "Iglesia de santiago.JPG", author: "Josecamilom", license: "Dominio público" },
   "Parroquia de Santiago Apóstol": { file: "Sector antiguo de Pasto - Iglesia de Santiago.jpg", author: "Jorgelrm", license: "CC BY-SA 3.0" },
   "Iglesia de San Juan Bautista": { file: "Iglesia San Juan Bautista de Pasto.JPG", author: "German Bolaños", license: "CC BY-SA 3.0" },
   "Iglesia de San Agustín": { file: "CO Pasto 1109 (4) (17222741876).jpg", author: "Diego Tirira from Quito, Ecuador", license: "CC BY-SA 2.0" },

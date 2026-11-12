@@ -73,36 +73,17 @@ const pendingCoordinates: Record<string, Coordinates> = {
   "Parroquia de Santiago Apóstol": { latitude: 1.21087, longitude: -77.28215 },
   "Iglesia de San Juan Bautista": { latitude: 1.21514, longitude: -77.27875 },
   "Iglesia de San Agustín": { latitude: 1.2133, longitude: -77.2793 },
-  "Iglesia de Fátima": { latitude: 1.20436, longitude: -77.27287 },
   "Iglesia del Carmen": { latitude: 1.19973, longitude: -77.26343 },
   "Iglesia de San Sebastián": { latitude: 1.21199, longitude: -77.27541 },
-  "Iglesia del Niño Jesús de Praga": { latitude: 1.20414, longitude: -77.29292 },
-  "Iglesia del Obrero": { latitude: 1.20957, longitude: -77.28681 },
-  "Iglesia de Anganoy": { latitude: 1.21417, longitude: -77.29947 },
-  "Iglesia de Lourdes": { latitude: 1.21502, longitude: -77.28416 },
-  "Iglesia de San Juan Bosco": { latitude: 1.20693, longitude: -77.27583 },
   "Iglesia de La Milagrosa": { latitude: 1.21795, longitude: -77.27463 },
   "Plaza del Carnaval": { latitude: 1.21054, longitude: -77.27655 },
   "Plazoleta de San Agustín": { latitude: 1.21343, longitude: -77.27946 },
   "Plazoleta de San Juan": { latitude: 1.215, longitude: -77.2786 },
   "Plazoleta de San Andrés": { latitude: 1.2172, longitude: -77.2814 },
   "Plazoleta de La Merced": { latitude: 1.2121, longitude: -77.2779 },
-  "Plazoleta de Bomboná": { latitude: 1.21693, longitude: -77.28342 },
   "Plazoleta del Museo Taminango": { latitude: 1.21475, longitude: -77.28408 },
   "Plazoleta Banco de la República": { latitude: 1.21162, longitude: -77.27669 },
   "Parque de Santiago": { latitude: 1.21061, longitude: -77.28277 },
-  "Parque de Palermo": { latitude: 1.22708, longitude: -77.28329 },
-  "Parque Las Piedras": { latitude: 1.22535, longitude: -77.28368 },
-  "Parque Versalles": { latitude: 1.22419, longitude: -77.28219 },
-  "Parque Paraná": { latitude: 1.22208, longitude: -77.28464 },
-  "Parque Recreativo Chapalito": { latitude: 1.18584, longitude: -77.27569 },
-  "Parque Toledo": { latitude: 1.21723, longitude: -77.27459 },
-  "Centro Comercial Unico Outlet - Pasto": { latitude: 1.20568, longitude: -77.25962 },
-  "Centro Comercial Valle de Atriz": { latitude: 1.22739, longitude: -77.28612 },
-  "Centro Comercial Amorel": { latitude: 1.21098, longitude: -77.2787 },
-  "Centro Comercial La 17": { latitude: 1.21408, longitude: -77.2793 },
-  "Centro Comercial Bomboná": { latitude: 1.2168, longitude: -77.28397 },
-  "Centro Comercial El Vergel": { latitude: 1.2123, longitude: -77.29239 },
   "Casona Taminango": { latitude: 1.21522, longitude: -77.28427 },
   "Teatro Imperial": { latitude: 1.21462, longitude: -77.28232 },
   "Cerro Morasurco": { latitude: 1.28777, longitude: -77.21519 },
@@ -416,11 +397,8 @@ export const places: Place[] = [
   },
   ...[
     "Parroquia de Santiago Apóstol", "Iglesia de San Juan Bautista",
-    "Iglesia de San Agustín", "Iglesia de La Panadería", "Iglesia de Fátima",
-    "Iglesia del Carmen", "Iglesia de Jesús del Río", "Iglesia de San Sebastián",
-    "Iglesia del Niño Jesús de Praga", "Iglesia de Maridíaz", "Iglesia del Obrero", "Iglesia de San Antonio",
-    "Iglesia de Anganoy", "Iglesia de Lourdes", "Iglesia de San Juan Bosco", "Iglesia de Miraflores",
-    "Iglesia de la Inmaculada Concepción", "Iglesia de la Sagrada Familia",
+    "Iglesia de San Agustín",
+    "Iglesia del Carmen", "Iglesia de San Sebastián",
   ].map((name) => pendingEntry(name, "Templos", "Historia")),
 
   // ─── Plazas y plazoletas con ficha completa ──────────────────────────────────
@@ -455,10 +433,8 @@ export const places: Place[] = [
   },
   ...[
     "Plazoleta de San Juan", "Plaza del Carnaval", "Plazoleta de San Agustín",
-    "Plazoleta Cristo Rey", "Plazoleta de La Panadería", "Plazoleta de La Merced", "Plazoleta de San Andrés",
-    "Plazoleta de Bomboná", "Plazoleta de Lourdes", "Plazoleta del Museo Taminango",
-    "Plazoleta Banco de la República", "Plazoleta Galán", "Plazoleta Éxito", "Plazoleta Avenida Boyacá",
-    "Plazoleta San Andresito",
+    "Plazoleta Cristo Rey", "Plazoleta de La Merced", "Plazoleta de San Andrés", "Plazoleta del Museo Taminango",
+    "Plazoleta Banco de la República",
   ].map((name) => pendingEntry(name, "Plazas", "Historia")),
   // ─── Edificios institucionales históricos ─────────────────────────────────────
   {
@@ -575,17 +551,10 @@ export const places: Place[] = [
     scope: "Urbano",
   },
   ...[
-    "Parque Ecológico Aurelio Arturo", "Parque Ambiental Rumipamba", "Parque de Santiago", "Parque de Palermo", "Parque La Minga",
-    "Parque Caracha", "Parque Las Piedras", "Parque Versalles", "Parque Las Brisas", "Parque Las Mercedes",
-    "Parque Laureano Gómez", "Parque Paraná", "Parque El Bosque", "Parque Villa Sofía", "Parque La Esmeralda",
-    "Parque Barrio Navarrete", "Parque Maridíaz", "Parque Las Cuadras", "Parque Recreativo Chapalito",
-    "Parque Teatro al Aire Libre", "Parque lineal quebrada Cujacal", "Parque lineal quebrada Alta Vista",
-    "Parque lineal canal de las Aguas", "Parque lineal quebrada Membrillo Guaico", "Parque Toledo",
+    "Parque de Santiago",
   ].map((name) => pendingEntry(name, "Parques", "Naturaleza")),
   ...[
-    "Centro Comercial Unicentro Pasto", "Centro Comercial Unico Outlet - Pasto", "Centro comercial San Andresito",
-    "Centro comercial Pasto Centro", "Centro Comercial Valle de Atriz",
-    "Centro Comercial El Vergel", "Centro Comercial Amorel", "Centro Comercial La 17", "Centro Comercial Bomboná",
+    "Centro Comercial Unicentro Pasto",
   ].map((name) => pendingEntry(name, "Centros comerciales", "Cultura")),
   {
     id: "centros-comerciales-sebastian-de-belalcazar",
@@ -644,7 +613,7 @@ export const places: Place[] = [
     scope: "Urbano",
   },
   ...[
-    "Puentes de El Encano", "Puentes rurales del municipio",
+    "Puentes de El Encano",
   ].map((name) => pendingEntry(name, "Puentes", "Historia")),
   // ─── Museos con ficha completa ────────────────────────────────────────────────
   {
@@ -705,8 +674,8 @@ export const places: Place[] = [
     scope: "Urbano",
   },
   ...[
-    "Museo Juan Lorenzo Lucero", "Casona Taminango",
-    "Teatro Imperial", "Teatro San Felipe Neri", "Teatro Javeriano",
+    "Casona Taminango",
+    "Teatro Imperial",
   ].map((name) => pendingEntry(name, "Museos", "Cultura")),
   // ─── Naturaleza con ficha completa ────────────────────────────────────────────
   {
@@ -739,10 +708,10 @@ export const places: Place[] = [
     scope: "Municipio",
   },
   ...[
-    "Parque Ambiental Chimayoy", "Senderos de Pasto", "Reserva Natural La Planada",
+    "Parque Ambiental Chimayoy",
   ].map((name) => pendingEntry(name, "Naturaleza", "Naturaleza")),
   ...[
-    "Cuy", "Frito pastuso", "Hornado", "Helado de paila", "Morocho",
+    "Cuy", "Frito pastuso", "Hornado", "Helado de paila",
   ].map((name) => pendingEntry(name, "Gastronomía", "Gastronomía", "Plato típico")),
   // Nuevos lugares turísticos de Pasto (con foto)
   pendingEntry("Isla La Corota", "Naturaleza", "Naturaleza"),

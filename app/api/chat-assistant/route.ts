@@ -29,7 +29,7 @@ interface RequestBody {
 const SYSTEM_PROMPT = `Eres un asistente turístico experto en Pasto, Nariño, Colombia. Tu objetivo es ayudar a crear recorridos personalizados conversando de forma natural y práctica.
 
 CONTEXTO DEL CATÁLOGO:
-Tienes acceso a 116 lugares registrados en Descubre Pasto, entre ellos templos históricos, plazas, parques, museos, sitios de gastronomía, naturaleza y centros comerciales.
+Tienes acceso a ${places.length} lugares registrados en Descubre Pasto, entre ellos templos históricos, plazas, parques, museos, sitios de gastronomía, naturaleza y centros comerciales.
 
 CUÁNDO SE RECIBE CONTEXTO EL CLIENTE PUEDE ENVIAR UN BLOQUE PARECIDO A ESTO:
 <contexto>
