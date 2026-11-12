@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { distanceKm, interests, places, type Place } from "@/lib/places";
 import type { Intent, RecommendationRequest } from "@/lib/types";
 import { getGroq } from "@/lib/groq";
+import { buildDirections } from "@/lib/directions";
 
 type RoutablePlace = Place & { latitude: number; longitude: number; visitMinutes: number };
 
@@ -220,6 +221,10 @@ export async function POST(request: Request) {
         order: index + 1,
       })),
       estimatedMinutes: result.estimatedMinutes,
+      // Recorrido completo en Google Maps (todas las paradas en orden)
+      directions: result.route.length
+        ? buildDirections(result.route.map(({ place }) => place), { origin: body.startCoordinates, mode: "walking" })
+        : null,
       note: result.route.length
         ? `Los horarios y tiempos son referenciales y deben confirmarse antes de salir. ${result.aiEnhanced ? "Ruta optimizada con IA." : "Selección del catálogo disponible."}`
         : "No hay suficientes lugares del catálogo que coincidan con estos filtros y el tiempo disponible. Prueba ampliar el tiempo o cambiar intereses.",
