@@ -1,3 +1,5 @@
+import { pbkdf2Sha256 } from "@/lib/pbkdf2";
+
 const ACCOUNTS_KEY = "descubre-pasto-demo-accounts-v1";
 const SESSION_KEY = "descubre-pasto-demo-session-v1";
 const HASH_ITERATIONS = 310_000;
@@ -29,10 +31,18 @@ function toHex(bytes: Uint8Array) {
 }
 
 async function derivePasswordHash(password: string, salt: Uint8Array) {
-  const key = await crypto.subtle.importKey("raw", new TextEncoder().encode(password), "PBKDF2", false, ["deriveBits"]);
+  const passwordBytes = new TextEncoder().encode(password);
+  // crypto.subtle solo existe en páginas seguras (https o localhost). En el celular,
+  // abriendo la app por la IP del PC o dentro de Expo Go, no está: usamos la versión en JS.
+  const subtle = typeof crypto !== "undefined" ? crypto.subtle : undefined;
+  if (!subtle) {
+    await new Promise((r) => setTimeout(r, 0)); // deja que la pantalla muestre "cargando"
+    return toHex(pbkdf2Sha256(passwordBytes, salt, HASH_ITERATIONS));
+  }
+  const key = await subtle.importKey("raw", passwordBytes, "PBKDF2", false, ["deriveBits"]);
   const saltBuffer = new ArrayBuffer(salt.byteLength);
   new Uint8Array(saltBuffer).set(salt);
-  const bits = await crypto.subtle.deriveBits({ name: "PBKDF2", hash: "SHA-256", salt: saltBuffer, iterations: HASH_ITERATIONS }, key, 256);
+  const bits = await subtle.deriveBits({ name: "PBKDF2", hash: "SHA-256", salt: saltBuffer, iterations: HASH_ITERATIONS }, key, 256);
   return toHex(new Uint8Array(bits));
 }
 
