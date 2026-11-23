@@ -52,8 +52,12 @@ export default function App() {
 
   // Enlaces externos (Google Maps, Wikimedia…) se abren en su app, no dentro de la WebView.
   const onShouldStart = useCallback(
-    (req: WebViewNavigation) => {
+    (req: WebViewNavigation & { isTopFrame?: boolean }) => {
       const url = req.url;
+      // iOS también avisa de lo que carga dentro de un iframe (como el mapa de Google
+      // en la ficha de cada lugar). Eso se deja cargar ahí mismo; solo se abren afuera
+      // los enlaces que cambian la página completa.
+      if (req.isTopFrame === false) return true;
       if (url.startsWith(webUrl) || url.startsWith("about:") || url.startsWith("data:") || url.startsWith("blob:")) return true;
       Linking.openURL(url).catch(() => {});
       return false;
