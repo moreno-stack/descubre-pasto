@@ -19,7 +19,8 @@ App Expo que muestra la app web de Descubre Pasto a pantalla completa en el celu
 
 El celular y el PC deben estar en la **misma red WiFi**. Si Windows pregunta por el firewall, dale **Permitir** (redes privadas).
 
-La app carga la web desde la misma IP de tu PC en el puerto 3000, no hay que configurar nada.
+La app carga la web desde la misma IP de tu PC en el puerto **3003** (el que usa `npm run dev:lan`), no hay que configurar nada.
+Si algún día cambias el puerto, cámbialo en los dos lados: en `dev:lan` del `package.json` de la web y creando aquí un `.env` con `EXPO_PUBLIC_WEB_PORT=el-puerto`.
 
 ## Si la WiFi no deja conectar (universidad, red pública)
 

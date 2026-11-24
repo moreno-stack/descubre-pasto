@@ -16,17 +16,19 @@ const WebView = RNWebView as unknown as React.ComponentType<Record<string, unkno
  *
  * Dirección que se carga:
  *  1. EXPO_PUBLIC_WEB_URL si la defines (por ejemplo tu web publicada en Vercel).
- *  2. Si no, la misma IP del PC que está corriendo Expo, puerto 3000.
+ *  2. Si no, la misma IP del PC que está corriendo Expo, en el puerto WEB_PORT (3003,
+ *     el mismo de `npm run dev:lan`). Se puede cambiar con EXPO_PUBLIC_WEB_PORT.
  */
 
 const BG = "#220710";
+const WEB_PORT = process.env.EXPO_PUBLIC_WEB_PORT || "3003";
 
 function resolveWebUrl(): string {
   const fromEnv = process.env.EXPO_PUBLIC_WEB_URL;
   if (fromEnv) return fromEnv.replace(/\/$/, "");
   const hostUri = Constants.expoConfig?.hostUri; // ej. "192.168.1.10:8081"
   const host = hostUri?.split(":")[0];
-  return `http://${host ?? "localhost"}:3000`;
+  return `http://${host ?? "localhost"}:${WEB_PORT}`;
 }
 
 export default function App() {
